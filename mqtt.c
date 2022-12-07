@@ -4,12 +4,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+//BIB FOR MQTT
 #include <MQTTClient.h>
+
+//BIB FOR THREAD AND INTERRUPT
+#include <wiringPi.h>
+
+//BIB FOR DISPLAY
+#include "display.h"
 
 #define MQTT_ADDRESS   "tcp://10.0.0.101:1883"
 #define USER           "aluno"
 #define PASSWORD       "@luno*123"
-#define CLIENTID       "MQTTCClientRASP"  
+#define CLIENTID       "MQTTClientRASP"  
 #define QOS            1
 #define TIMEOUT        10000L
 
@@ -38,8 +46,11 @@ int main(int argc, char *argv[]){
        exit(-1);
    }
 
-   //MQTTClient_subscribe(client, NODEMCU_PUBLISH, 0);
-   MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);
+    MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);
+
+    PI_THREAD (myThread){
+
+    }
 
     system("cls || clear");
     printf("PBL - Interfaces de E/S. \n \n");

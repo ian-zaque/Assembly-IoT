@@ -1,7 +1,7 @@
 lib = display
 
-uart: uart.c
-	gcc uart.c -o uart.run -lwiringPi $(lib).o
+mqtt: mqtt.c
+	gcc mqtt.c -o mqtt.run -lpaho-mqtt3c $(lib).o
 
 $(lib).o: $(lib).s
 	as -g -o $(lib).o $(lib).s

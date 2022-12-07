@@ -1,0 +1,29 @@
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<div id="app">
+{{ message }}
+
+<button @click="clicar">
+  clica
+</button>
+
+</div>
+
+<script>
+  const { createApp } = Vue
+
+  createApp({
+    data() {
+      return {
+        message: 'Hello Vue!'
+      }
+    },
+    
+    methods:{
+    	clicar(){
+      	this.message = this.message + " , algo"
+      }
+    }
+    
+  }).mount('#app')
+</script>
