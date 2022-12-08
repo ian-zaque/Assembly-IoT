@@ -12,12 +12,12 @@
 #include <wiringPi.h>
 
 //BIB FOR DISPLAY
-#include "display.h"
+//#include "display.h"
 
 #define MQTT_ADDRESS   "tcp://10.0.0.101:1883"
 #define USER           "aluno"
 #define PASSWORD       "@luno*123"
-#define CLIENTID       "MQTTClientRASP"  
+#define CLIENTID       "MQTTClientRASP"
 #define QOS            1
 #define TIMEOUT        10000L
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
 
    while(1){
        /*
-        * este client opera por "interrupcao", ou seja, opera em fun��o do que � recebido no callback de recepcao de 
+        * este client opera por "interrupcao", ou seja, opera em funï¿½ï¿½o do que ï¿½ recebido no callback de recepcao de 
         * mensagens MQTT. Portanto, neste laco principal nao eh preciso fazer nada.
         */
    }
