@@ -48,9 +48,9 @@ int main(int argc, char *argv[]){
 
     MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);
 
-    PI_THREAD (myThread){
+    //PI_THREAD (myThread){
 
-    }
+    //}
 
     system("cls || clear");
     printf("PBL - Interfaces de E/S. \n \n");
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
     printf("5 - Desligamento do led da NodeMCU. \n \n");
     sleep(2);
 
-    for(int i = 0; i <= 4; i++){           // LOOP TO ENGAGE AUTOMATIC ACTIONS
+    for(int i = 0; i <= 4; i++){           // LOOP TO ENGAGE AUTOMATIC ACTIONS          
           if(i == 0){                   //this checks the NodeMCU status.
                printf("Ação: Solicita a situação atual do NodeMCU. \n \n");
                sleep(1);
@@ -82,8 +82,16 @@ int main(int argc, char *argv[]){
                //system("cls || clear");
                printf("Ação: Solicita o valor de uma das entradas digitais. \n \n");
                sleep(1);
-
-               publish(client, NODEMCU_PUBLISH, "50");
+               
+               for (int sensorIdx = 50; sensorIdx < 59; sensorIdx++){   //LOOP TO COMMUTE DIGITAL SENSORS
+                   sleep(2);
+                   printf("Entrada digital: %d. \n \n", sensorIdx);
+                   
+                   char numStr[6] = "";
+                   sprintf(numStr, "%d", sensorIdx);               //CONVERT INTEGER TO STRING
+                   
+                   publish(client, NODEMCU_PUBLISH, numStr);
+               }
             }
 
             if(i == 3){                   //this turn on the led
@@ -108,7 +116,7 @@ int main(int argc, char *argv[]){
 
    while(1){
        /*
-        * este client opera por "interrupcao", ou seja, opera em funÃ¯Â¿Â½Ã¯Â¿Â½o do que Ã¯Â¿Â½ recebido no callback de recepcao de 
+        * este client opera por "interrupcao", ou seja, opera em funcao do que eh recebido no callback de recepcao de 
         * mensagens MQTT. Portanto, neste laco principal nao eh preciso fazer nada.
         */
    }
@@ -158,17 +166,20 @@ void evaluateRecData(char * topicName, char *payload){
 
         // 01
         else if (payload[0] == '0' && payload[1] == '1'){
-           char text[] = "S. Analog.: ";
-           //strcat(text, val);
-           //write_textLCD(text);
-           printf("Resposta 01: %s. \n", payload);
+           char inputValue[] = "";
+           strncpy(inputValue, payload + 2, sizeof(payload) - 2);       // COPYING ONLY THE INPUT VALUE RECEIVED
+           
+           printf("Resposta 01: %s. \n", inputValue);
         }
 
         //02
         else if (payload[0] == '0' && payload[1] == '2'){
-           char text[] = "S. Digital: ";
-           //write_textLCD(text2);
-           printf("Resposta 02: %s. \n", payload);
+           char digitalSensor[] = "";
+           char inputValue[] = "";
+           strncpy(digitalSensor, payload + 2, sizeof(payload) - 2);       // COPYING ONLY THE DIGITAL SENSOR RECEIVED
+           strncpy(inputValue, payload + 4, sizeof(payload) - 4);       // COPYING ONLY THE INPUT VALUE RECEIVED
+           
+           printf("Resposta 02: %s , %s. \n", digitalSensor, inputValue);
         }
 
         else{
