@@ -40,7 +40,16 @@ const char* mqqt_broker= "10.0.0.101";
 const char* mqtt_user= "aluno";
 const char* mqtt_password="@luno*123";
 
-char EstadoSaida='0';
+//Entradas Digitais
+const int sensor_zero = D0;
+const int sensor_D1 = D1;
+const int sensor_D2 = D2;
+const int sensor_D3 = D3;
+const int sensor_D4 = D4;
+const int sensor_D5 = D5;
+const int sensor_D6 = D6;
+const int sensor_D7 = D7;
+const int sensor_D8 = D8;
 
 // client wifi
 WiFiClient espClient;
@@ -101,7 +110,7 @@ void initMqtt(){
     Serial.println("Node conectada");
     client.subscribe(TOPICO_SUBSCRIBE);
     client.subscribe(TOPICO_PUBLISH);
-   // client.subscribe(TOPICO_SUBSCRIBE2);
+
 
   }else{
     
@@ -110,11 +119,57 @@ void initMqtt(){
 }
 
 void EnviaEstadoOutputMQTT(void){
-  if(COMANDO=="D"){
-    client.publish(TOPICO_PUBLISH,COMANDO);
-  }
-
-  delay(2000);
+ 
+    if(COMANDO == "30"){
+      client.publish(TOPICO_PUBLISH,operating_normally);      
+    }else if(COMANDO == "40"){
+      String entrada = String(analogRead(A0));
+      client.publish(TOPICO_PUBLISH,analog_entry_measure +entrada);
+    //  client.publish(TOPICO_PUBLISH,entrada);
+    }else if(COMANDO =="50"){
+      String entrada_D0 = String(digitalRead(sensor_zero));
+      String sensor_D0 = "D0";
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_D0+entrada_D0);          
+    }else if(COMANDO == "51"){
+      String entrada_D1 = String(digitalRead(sensor_D1));
+      String sensor_name_D1 = "D1";
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D1+entrada_D1);      
+    }else if(COMANDO == "52"){
+      String sensor_name_D2 = "D2";
+      String entrada_D2 = String(digitalRead(sensor_D2));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D2+entrada_D2);
+    }else if(COMANDO == "53"){
+      String sensor_name_D3 = "D3";
+      String entrada_D3 = String(digitalRead(sensor_D3));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D3+entrada_D3);
+      String entrada_D4 = String(digitalRead(sensor_D4));
+      String sensor_name_D4="D4";
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D4+entrada_D4);      
+    }else if(COMANDO =="55"){
+      String sensor_name_D5 = "D5";
+       String entrada_D5 = String(digitalRead(sensor_D5));
+       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D5+entrada_D5);
+    }else if(COMANDO =="56"){
+      String sensor_name_D6 ="D6";
+      String entrada_D6 = String(digitalRead(sensor_D6));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D6+entrada_D6);           
+    }else if(COMANDO == "57"){
+      String sensor_name_D7="D7";
+      String entrada_D7 = String(digitalRead(sensor_D7));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D7+entrada_D7);
+    }else if(COMANDO == "58"){
+      String sensor_name_D8="D8";
+      String entrada_D8= String(digitalRead(sensor_D8));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D8+entrada_D8);      
+    }else if(COMANDO=="60"){
+      digitalWrite(LED_BUILTIN,HIGH);
+      client.publish(TOPICO_PUBLISH,operating_normally);
+    }else if(COMANDO == "70"){
+      digitalWrite(LED_BUILTIN,LOW);
+      client.publish(TOPICO_PUBLISH,operating_normally);
+    }
+    
+   COMANDO="0";
 }
 
 
@@ -187,7 +242,17 @@ void setup() {
 
 
   // Setup project
-  pinMode(LED_BUILTIN,OUTPUT);
+   pinMode(LED_BUILTIN,OUTPUT);
+  pinMode(A0,OUTPUT);
+  pinMode(sensor_zero,OUTPUT);
+  pinMode(sensor_D1,OUTPUT);
+  pinMode(sensor_D2,OUTPUT);
+  pinMode(sensor_D3,OUTPUT);
+  pinMode(sensor_D4,OUTPUT);
+  pinMode(sensor_D5,OUTPUT);
+  pinMode(sensor_D6,OUTPUT);
+  pinMode(sensor_D7,OUTPUT);
+  pinMode(sensor_D8,OUTPUT);  
   Serial.begin(9600);
   setup_wifi();
   initMqtt();
@@ -196,13 +261,7 @@ void setup() {
 
 void loop() {
   ArduinoOTA.handle();
-
-  if(client.connected()){
-    Serial.println("Conectado");
-  }
-  client.loop();
   EnviaEstadoOutputMQTT();  // Envia um dado para quem solicita
-
-  client.publish(TOPICO_PUBLISH,"IAN");
+  client.loop();
   delay(3000);
 }
