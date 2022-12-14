@@ -38,30 +38,32 @@ static volatile int stateBtn2;
 static volatile int stateBtn3;
 
 typedef struct Historic {
-  char sensor[2];
+  char *sensor;
   int historic[10];
+  int timestamps[10];
   int last_modified;
-} Historic
+} Historic;
 
 Historic array_registros[10];
 
 void publish(MQTTClient client, char* topic, char* payload);
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 void evaluateRecData(char *topicName, char *payload);
-char *substring( char *src, int start, int end);
-void updateHistory(char * sensor, char * newValue);
+char *substring(char *src, int start, int end);
+void updateHistory(char * sensor, int newValue);
 void initArrayRegistros();
 void handle (void);
 
+/*
 PI_THREAD (BUTTON_INTERRUPTION){
   for (;;){
      stateBtn1 = digitalRead(BTN1);                     // Get initial state of pin
      stateBtn2 = digitalRead(BTN2);                     // Get initial state of pin
      stateBtn3 = digitalRead(BTN3);
     
-     /*printf("VALUE 1: %d \n \n", stateBtn1);
+     printf("VALUE 1: %d \n \n", stateBtn1);
      printf("VALUE 2: %d \n \n", stateBtn2);
-     printf("VALUE 3: %d \n \n", stateBtn3); */
+     printf("VALUE 3: %d \n \n", stateBtn3);
      
      if (stateBtn1 == 0) {
         printf("BUTTON 1 PRESSED \n \n");
@@ -81,7 +83,7 @@ PI_THREAD (BUTTON_INTERRUPTION){
      }
   }
   
-}
+} */
 
 int main(int argc, char *argv[]){
    int rc;
@@ -178,7 +180,6 @@ int main(int argc, char *argv[]){
 
                publish(client, NODEMCU_PUBLISH, "70");
             }
-
     }
 
     return rc;
@@ -207,7 +208,7 @@ void publish(MQTTClient client, char* topic, char* payload) {
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char* payload = message->payload;
 
-    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s \n n", topicName, payload);
+    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s \n \n", topicName, payload);
     evaluateRecData(topicName, payload);
 
     MQTTClient_freeMessage(&message);
@@ -234,19 +235,23 @@ void evaluateRecData(char * topicName, char *payload){
 
         // 01
         else if (payload[0] == '0' && payload[1] == '1'){
-           char *analogInputValue = substr(payload, 2, sizeof(payload));     // COPYING ONLY THE INPUT VALUE RECEIVED
-           updateHistoric("A0", analogInputValue);
+           char *analogInputValue = substring(payload, 2, sizeof(payload)+1);     // COPYING ONLY THE INPUT VALUE RECEIVED
+
+           int value = atoi(analogInputValue);            // CONVERT STRING TO INT
+           updateHistory("A0", value);
            printf("Resposta 01: %s. \n", analogInputValue);
         }
 
         //02
         else if (payload[0] == '0' && payload[1] == '2'){
-           char *digitalInputValue = substr(payload, 4, sizeof(payload));                 // COPYING ONLY THE INPUT VALUE RECEIVED
-           char *digitalSensor = substr(payload, 2, sizeof(digitalInputValue) - 4);      // COPYING ONLY THE DIGITAL SENSOR RECEIVED
+           // COPYING THE DIGITAL SENSOR & INPUT VALUE RECEIVED       
+           char *digitalSensor = substring(payload, 2, 4);
+           char *digitalInputValue = substring(payload, 4, sizeof(payload)*sizeof(payload));
 
+           int value = atoi(digitalInputValue);         // CONVERT STRING TO INT
            printf("Sensor: %s. \n", digitalSensor);
-           printf("Valor Sensor: %s. \n", digitalInputValue);
-           updateHistoric(digitalSensor, digitalInputValue);
+           printf("Valor Sensor: %s , %d. \n", digitalInputValue, value);
+           updateHistory(digitalSensor, value);
         }
 
         else{
@@ -267,108 +272,149 @@ char *substring( char *src, int start, int end){
 	int len = end - start;                                    // get the length of the destination string
 	char *dest = (char*)malloc(sizeof(char) * (len + 1));    // allocate (len + 1) chars for destination (+1 for extra null character)
 	strncpy(dest, (src + start), len);                       // start with start'th char and copy `len` chars into the destination
-
 	return dest;
 }
 
-void updateHistory(char *sensor, char *newValue){
-     if(strcmp(sensor, "A0") == 0){
-        array_registros[0].historic[array_registros[0].last_modified++] = newValue;
-        publish(client, SENSORS_HISTORY, "JSON_HERE");
+void updateHistory(char *sensor, int newValue){
+     printf("Sensor: %s \n \n", sensor);
+     printf("New Value: %d \n \n", newValue);
+     
+     int idx = 0;
+     int idx2 = 0;
+     struct timeval now;                        // timestamp
+     gettimeofday(&now, NULL);
+     
+     if(strcmp(sensor, "A0") == 0){                       
+        idx = ++array_registros[0].last_modified;
+        idx2 = 0;
+        if(idx >= 9){ array_registros[0].last_modified = -1; }
+        
+        array_registros[0].historic[idx] = newValue;
+        array_registros[0].timestamps[idx] = now.tv_usec;
+        //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D0") == 0){
-        array_registros[1].historic[array_registros[1].last_modified++] = newValue;
-        publish(client, SENSORS_HISTORY, "JSON_HERE");
+        idx = ++array_registros[1].last_modified;
+        idx2 = 1;
+        if(idx >= 9){ array_registros[1].last_modified = -1; }
+        
+        array_registros[1].historic[idx] = newValue;
+        array_registros[1].timestamps[idx] = now.tv_usec;
+        //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D1") == 0){
-        array_registros[2].historic[array_registros[2].last_modified++] = newValue;
-        publish(client, SENSORS_HISTORY, "JSON_HERE");
+        idx = ++array_registros[2].last_modified;
+        idx2 = 2;
+        if(idx >= 9){ array_registros[2].last_modified = -1; }
+        
+        array_registros[2].historic[idx] = newValue;
+        array_registros[2].timestamps[idx] = now.tv_usec;
+        //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D2") == 0){
-       array_registros[3].historic[array_registros[3].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[3].last_modified;
+       idx2 = 3;
+       if(idx >= 9){ array_registros[3].last_modified = -1; }
+        
+       array_registros[3].historic[idx] = newValue;
+       array_registros[3].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D3") == 0){
-       array_registros[4].historic[array_registros[4].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[4].last_modified;
+       idx2 = 4;
+       if(idx >= 9){ array_registros[4].last_modified = -1; }
+        
+       array_registros[4].historic[idx] = newValue;
+       array_registros[4].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D4") == 0){
-       array_registros[5].historic[array_registros[5].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[5].last_modified;
+       idx2 = 5;
+       if(idx >= 9){ array_registros[5].last_modified = -1; }
+        
+       array_registros[5].historic[idx] = newValue;
+       array_registros[5].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D5") == 0){
-       array_registros[6].historic[array_registros[6].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[6].last_modified;
+       idx2 = 6;
+       if(idx >= 9){ array_registros[6].last_modified = -1; }
+        
+       array_registros[6].historic[idx] = newValue;
+       array_registros[6].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D6") == 0){
-       array_registros[7].historic[array_registros[7].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[7].last_modified;
+       idx2 = 7;
+       if(idx >= 9){ array_registros[7].last_modified = -1; }
+        
+       array_registros[7].historic[idx] = newValue;
+       array_registros[7].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D7") == 0){
-       array_registros[8].historic[array_registros[8].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[8].last_modified;
+       idx2 = 8;
+       if(idx >= 9){ array_registros[8].last_modified = -1; }
+        
+       array_registros[8].historic[idx] = newValue;
+       array_registros[8].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else if(strcmp(sensor, "D8") == 0){
-       array_registros[9].historic[array_registros[9].last_modified++] = newValue;
-       publish(client, SENSORS_HISTORY, "JSON_HERE");
+       idx = ++array_registros[9].last_modified;
+       idx2 = 9;    
+       if(idx >= 9){ array_registros[9].last_modified = -1; }
+        
+       array_registros[9].historic[idx] = newValue;
+       array_registros[9].timestamps[idx] = now.tv_usec;
+       //publish(client, SENSORS_HISTORY, "JSON_HERE");
      }
      
      else{
        printf("Sensor %s desconhecido!!! \n \n", sensor);
-     }     
+     }
+     
+     for(int z = 0; z < 10; z++){
+       printf("Array Registros: [%d] , %d , %d , %d \n", idx2, array_registros[idx2].last_modified, array_registros[idx2].historic[z], array_registros[idx2].timestamps[z]);
+     }
 }
 
 // METHOD TO INITIALIZE THE VARIABLE 'array_registros'
 // Return: void
 void initArrayRegistros(){              // [A0, D0, D1, D2, D3, D4, D5, D6, D7, D8]
      array_registros[0].sensor = "A0";
-     array_registros[0].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[0].last_modified = -1;
-
      array_registros[1].sensor = "D0";
-     array_registros[1].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[1].last_modified = -1;
-
      array_registros[2].sensor = "D1";
-     array_registros[2].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[2].last_modified = -1;
-
      array_registros[3].sensor = "D2";
-     array_registros[3].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[3].last_modified = -1;
-
      array_registros[4].sensor = "D3";
-     array_registros[4].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[4].last_modified = -1;
-
      array_registros[5].sensor = "D4";
-     array_registros[5].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[5].last_modified = -1;
-
      array_registros[6].sensor = "D5";
-     array_registros[6].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[6].last_modified = -1;
-
      array_registros[7].sensor = "D6";
-     array_registros[7].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[7].last_modified = -1;
-
      array_registros[8].sensor = "D7";
-     array_registros[8].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[8].last_modified = -1;
-
      array_registros[9].sensor = "D8";
-     array_registros[9].historic = [0,0,0,0,0,0,0,0,0,0];
-     array_registros[9].last_modified = -1;
+     
+     for(int i = 0; i < 10; i++){
+        array_registros[i].last_modified = -1;
+        
+        for(int j = 0; j < 10; j++){
+           array_registros[i].historic[j] = 0;
+           array_registros[i].timestamps[j] = 0;
+        }
+     }
 }
 
 
@@ -378,7 +424,7 @@ void initArrayRegistros(){              // [A0, D0, D1, D2, D3, D4, D5, D6, D7, 
 void handle(void){
      stateBtn1 = digitalRead(BTN1);                     // Get initial state of pin
      stateBtn2 = digitalRead(BTN2);                     // Get initial state of pin
-     stateBtn3 = digitalRead(BTN3); 
+     stateBtn3 = digitalRead(BTN3);
 
      /*printf("VALUE 1: %d \n \n", stateBtn1);
      printf("VALUE 2: %d \n \n", stateBtn2);
