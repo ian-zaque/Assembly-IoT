@@ -51,6 +51,7 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
 void evaluateRecData(char *topicName, char *payload);
 char *substring(char *src, int start, int end);
 void updateHistory(char * sensor, int newValue);
+char *createJson(int index);
 void initArrayRegistros();
 void handle (void);
 
@@ -200,7 +201,7 @@ void publish(MQTTClient client, char* topic, char* payload) {
      MQTTClient_publishMessage(client, topic, &pubmsg, &token);
      MQTTClient_waitForCompletion(client, token, TIMEOUT);
 
-     printf("Mensagem enviada! \n\rTopico: %s Mensagem: %s \n \n", topic, payload);
+     //printf("Mensagem enviada! \n\rTopico: %s Mensagem: %s \n \n", topic, payload);
 }
 
 // METHOD CALLED WHENEVER A MESSAGE IS RECEIVED IN ANY SUBSCRIBED TOPIC
@@ -208,7 +209,7 @@ void publish(MQTTClient client, char* topic, char* payload) {
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char* payload = message->payload;
 
-    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s \n \n", topicName, payload);
+    //printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s \n \n", topicName, payload);
     evaluateRecData(topicName, payload);
 
     MQTTClient_freeMessage(&message);
@@ -249,8 +250,8 @@ void evaluateRecData(char * topicName, char *payload){
            char *digitalInputValue = substring(payload, 4, sizeof(payload)*sizeof(payload));
 
            int value = atoi(digitalInputValue);         // CONVERT STRING TO INT
-           printf("Sensor: %s. \n", digitalSensor);
-           printf("Valor Sensor: %s , %d. \n", digitalInputValue, value);
+           //printf("Sensor: %s. \n", digitalSensor);
+           //printf("Valor Sensor: %s , %d. \n", digitalInputValue, value);
            updateHistory(digitalSensor, value);
         }
 
@@ -263,6 +264,7 @@ void evaluateRecData(char * topicName, char *payload){
     else if(strcmp(topicName, "NODEMCU_PUBLISH") == 0){
          printf("Resposta NODEMCU_PUBLISH: %s. \n", payload);
     }
+    return;
 }
 
 // METHOD TO CUT AND GET STRING FROM START TO END
@@ -275,122 +277,180 @@ char *substring( char *src, int start, int end){
 	return dest;
 }
 
-void updateHistory(char *sensor, int newValue){
-     printf("Sensor: %s \n \n", sensor);
-     printf("New Value: %d \n \n", newValue);
-     
+void updateHistory(char *sensor, int newValue){     
      int idx = 0;
-     int idx2 = 0;
      struct timeval now;                        // timestamp
      gettimeofday(&now, NULL);
      
+     char *json = (char*)malloc(sizeof(char) * (400));
+     char sensorTopic[20];
+     strcpy(sensorTopic, "SENSORS_HISTORY/");
+     strcat(sensorTopic, sensor);
+     
      if(strcmp(sensor, "A0") == 0){                       
         idx = ++array_registros[0].last_modified;
-        idx2 = 0;
-        if(idx >= 9){ array_registros[0].last_modified = -1; }
+        if(array_registros[0].last_modified >= 9){ array_registros[0].last_modified = -1; }
         
         array_registros[0].historic[idx] = newValue;
         array_registros[0].timestamps[idx] = now.tv_usec;
-        //publish(client, SENSORS_HISTORY, "JSON_HERE");
+        strcpy(json, createJson(0));
+        publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D0") == 0){
         idx = ++array_registros[1].last_modified;
-        idx2 = 1;
-        if(idx >= 9){ array_registros[1].last_modified = -1; }
+        if(array_registros[1].last_modified >= 9){ array_registros[1].last_modified = -1; }
         
         array_registros[1].historic[idx] = newValue;
         array_registros[1].timestamps[idx] = now.tv_usec;
-        //publish(client, SENSORS_HISTORY, "JSON_HERE");
+        strcpy(json, createJson(1));
+        publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D1") == 0){
         idx = ++array_registros[2].last_modified;
-        idx2 = 2;
-        if(idx >= 9){ array_registros[2].last_modified = -1; }
+        if(array_registros[2].last_modified >= 9){ array_registros[2].last_modified = -1; }
         
         array_registros[2].historic[idx] = newValue;
         array_registros[2].timestamps[idx] = now.tv_usec;
-        //publish(client, SENSORS_HISTORY, "JSON_HERE");
+        strcpy(json, createJson(2));
+        publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D2") == 0){
        idx = ++array_registros[3].last_modified;
-       idx2 = 3;
-       if(idx >= 9){ array_registros[3].last_modified = -1; }
+       if(array_registros[3].last_modified >= 9){ array_registros[3].last_modified = -1; }
         
        array_registros[3].historic[idx] = newValue;
        array_registros[3].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(3));
+       publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D3") == 0){
        idx = ++array_registros[4].last_modified;
-       idx2 = 4;
-       if(idx >= 9){ array_registros[4].last_modified = -1; }
+       if(array_registros[4].last_modified >= 9){ array_registros[4].last_modified = -1; }
         
        array_registros[4].historic[idx] = newValue;
        array_registros[4].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(4));
+       publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D4") == 0){
        idx = ++array_registros[5].last_modified;
-       idx2 = 5;
-       if(idx >= 9){ array_registros[5].last_modified = -1; }
+       if(array_registros[5].last_modified >= 9){ array_registros[5].last_modified = -1; }
         
        array_registros[5].historic[idx] = newValue;
        array_registros[5].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(5));
+       publish(client, sensorTopic, createJson(5));
      }
      
      else if(strcmp(sensor, "D5") == 0){
        idx = ++array_registros[6].last_modified;
-       idx2 = 6;
-       if(idx >= 9){ array_registros[6].last_modified = -1; }
+       if(array_registros[6].last_modified >= 9){ array_registros[6].last_modified = -1; }
         
        array_registros[6].historic[idx] = newValue;
        array_registros[6].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(6));
+       publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D6") == 0){
        idx = ++array_registros[7].last_modified;
-       idx2 = 7;
-       if(idx >= 9){ array_registros[7].last_modified = -1; }
+       if(array_registros[7].last_modified >= 9){ array_registros[7].last_modified = -1; }
         
        array_registros[7].historic[idx] = newValue;
        array_registros[7].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(7));
+       publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D7") == 0){
        idx = ++array_registros[8].last_modified;
-       idx2 = 8;
-       if(idx >= 9){ array_registros[8].last_modified = -1; }
+       if(array_registros[8].last_modified >= 9){ array_registros[8].last_modified = -1; }
         
        array_registros[8].historic[idx] = newValue;
        array_registros[8].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(8));
+       publish(client, sensorTopic, json);
      }
      
      else if(strcmp(sensor, "D8") == 0){
        idx = ++array_registros[9].last_modified;
-       idx2 = 9;    
-       if(idx >= 9){ array_registros[9].last_modified = -1; }
+       if(array_registros[9].last_modified >= 9){ array_registros[9].last_modified = -1; }
         
        array_registros[9].historic[idx] = newValue;
        array_registros[9].timestamps[idx] = now.tv_usec;
-       //publish(client, SENSORS_HISTORY, "JSON_HERE");
+       strcpy(json, createJson(9));
+       publish(client, sensorTopic, json);
      }
      
      else{
        printf("Sensor %s desconhecido!!! \n \n", sensor);
      }
      
-     for(int z = 0; z < 10; z++){
-       printf("Array Registros: [%d] , %d , %d , %d \n", idx2, array_registros[idx2].last_modified, array_registros[idx2].historic[z], array_registros[idx2].timestamps[z]);
+     /*for(int z = 0; z < 10; z++){
+       printf("Array Registros: %d , %d , %d \n", array_registros[0].last_modified, array_registros[0].historic[z], array_registros[0].timestamps[z]);
+     } */
+     printf("JSON: %s \n\n", json);
+     free(json);
+     return;
+}
+
+
+char *createJson(int index){
+     char *json = (char*)malloc(sizeof(char) * (400));
+     strcpy(json, "{\"historico\": ");           //Ex.: { "historico\":
+
+     // LOOP TO CONCAT THE START OF JSON
+     for(int i = 0; i < 10; i++){
+        char valueHistoric[20];
+        sprintf(valueHistoric, "%d", array_registros[index].historic[i]);               //CONVERT INTEGER TO STRING
+
+        if(i == 0){
+           strcat(json, "\"[");                              //Ex.: { "\sensor\":\"A0\", \"historico\":\"[
+           strcat(json, valueHistoric); //Ex.: { "\sensor\":\"A0\", \"historico\":\"[0
+        }
+
+        else if(i == 9){
+           strcat(json, ", ");
+           strcat(json, valueHistoric);
+           strcat(json, "]\"}");
+        }
+
+        else{
+           strcat(json, ", ");
+           strcat(json, valueHistoric);
+        }
      }
+     
+     strcat(json, "\", \"timestamps\": ");           //Ex.: { "\sensor\":\"A0\", \"historico\":
+     
+     // LOOP TO CONCAT THE TIMESTAMPS TO JSON
+     for(int j = 0; j < 10; j++){
+        char *valueTimestamp;
+        sprintf(valueTimestamp, "%d", array_registros[index].timestamps[j]);               //CONVERT INTEGER TO STRING        
+
+        if(j == 0){
+           strcat(json, "\"[");                              //Ex.: { "\sensor\":\"A0\", \"historico\":\"[
+           strcat(json, valueTimestamp);                     //Ex.: { "\sensor\":\"A0\", \"historico\":\"[0
+        }
+
+        else if(j == 9){
+           strcat(json, ", ");
+           strcat(json, valueTimestamp);
+           strcat(json, "]\"}");
+        }
+
+        else{
+           strcat(json, ", ");
+           strcat(json, valueTimestamp);
+        }
+     }
+     
+     return json;
 }
 
 // METHOD TO INITIALIZE THE VARIABLE 'array_registros'
