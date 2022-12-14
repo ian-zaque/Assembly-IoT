@@ -1,5 +1,4 @@
 //gcc mqtt.c -o mqtt.run -lpaho-mqtt3c -lwiringPi -pthread -lm -lrt -lcrypt
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +24,7 @@
 
 #define NODEMCU_PUBLISH  "NODEMCU_PUBLISH"
 #define NODEMCU_RECEIVE  "NODEMCU_RECEIVE"
+#define SENSORS_HISTORY  "SENSORS_HISTORY"
 
 #define BTN1 19
 #define BTN2 23
@@ -37,34 +37,50 @@ static volatile int stateBtn1;
 static volatile int stateBtn2;
 static volatile int stateBtn3;
 
+typedef struct Historic {
+  char sensor[2];
+  int historic[10];
+  int last_modified;
+} Historic
+
+Historic array_registros[10];
+
 void publish(MQTTClient client, char* topic, char* payload);
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 void evaluateRecData(char *topicName, char *payload);
+char *substring( char *src, int start, int end);
+void updateHistory(char * sensor, char * newValue);
+void initArrayRegistros();
+void handle (void);
 
 PI_THREAD (BUTTON_INTERRUPTION){
   for (;;){
-     stateBtn1 = !digitalRead(BTN1);                     // Get initial state of pin
-     stateBtn2 = !digitalRead(BTN2);                     // Get initial state of pin
-     stateBtn3 = !digitalRead(BTN3); 
-
-     printf("VALUE 1: %d \n \n", stateBtn1);
+     stateBtn1 = digitalRead(BTN1);                     // Get initial state of pin
+     stateBtn2 = digitalRead(BTN2);                     // Get initial state of pin
+     stateBtn3 = digitalRead(BTN3);
+    
+     /*printf("VALUE 1: %d \n \n", stateBtn1);
      printf("VALUE 2: %d \n \n", stateBtn2);
-     printf("VALUE 2: %d \n \n", stateBtn3);
+     printf("VALUE 3: %d \n \n", stateBtn3); */
      
-	 if (stateBtn1 == 0) {
-		publish(client, NODEMCU_PUBLISH, "30");         //this checks the NodeMCU status.
-	 }
-
-	 if (stateBtn2 == 0) {
-		publish(client, NODEMCU_PUBLISH, "40");         ///this requests analog input value
-	 }
-
-	 if (stateBtn3 == 0) {
-		publish(client, NODEMCU_PUBLISH, "60");         // this turn on the led,
-		sleep(2);                                       // wait 2 seconds
-		publish(client, NODEMCU_PUBLISH, "70");         // then turns off the led
-	 }
+     if (stateBtn1 == 0) {
+        printf("BUTTON 1 PRESSED \n \n");
+        publish(client, NODEMCU_PUBLISH, "30");         //this checks the NodeMCU status.
+     }
+    
+     if (stateBtn2 == 0) {
+        printf("BUTTON 2 PRESSED \n \n");
+    	publish(client, NODEMCU_PUBLISH, "40");         ///this requests analog input value
+     }
+    
+     if (stateBtn3 == 0) {
+        printf("BUTTON 3 PRESSED \n \n");
+    	publish(client, NODEMCU_PUBLISH, "60");         // this turn on the led,
+    	sleep(2);                                       // wait 2 seconds
+    	publish(client, NODEMCU_PUBLISH, "70");         // then turns off the led
+     }
   }
+  
 }
 
 int main(int argc, char *argv[]){
@@ -83,19 +99,26 @@ int main(int argc, char *argv[]){
        exit(-1);
    }
 
-    MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);
+    MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);            //Subscribing to MQTT topic that NodeMcu publishes
 
-	wiringPiSetup();                                // Init  -- use the physical pin number on RPi P1 connector
+    initArrayRegistros();                         // INIT HISTORIC
+
+	/*wiringPiSetup();                                // Init  -- use the physical pin number on RPi P1 connector	
 	pinMode(BTN1, INPUT);                          // Set pin to output in case it's not
-	pinMode(BTN2, OUTPUT);                         // Set pin to output in case it's not
-	pinMode(BTN3, OUTPUT);                         // Set pin to output in case it's not
+	pinMode(BTN2, INPUT);                         // Set pin to output in case it's not
+	pinMode(BTN3, INPUT);                         // Set pin to output in case it's not
+    
+    wiringPiISR(BTN1, INT_EDGE_BOTH, &handle);
+    wiringPiISR(BTN2, INT_EDGE_BOTH, &handle);
+    wiringPiISR(BTN3, INT_EDGE_BOTH, &handle);
+    
+    stateBtn1 = digitalRead(BTN1);                     // Get initial state of pin
+    stateBtn2 = digitalRead(BTN2);                     // Get initial state of pin
+    stateBtn3 = digitalRead(BTN3); 
+    
+	piThreadCreate(BUTTON_INTERRUPTION);            // CREATING THREAD TO VERIFY INTERRUPTIONS */
 
-	piThreadCreate(BUTTON_INTERRUPTION);            // CREATING THREAD TO VERIFY INTERRUPTIONS
-	//wiringPiISR(BTN1, INT_EDGE_BOTH, &handle);     // Bind to interrupt	
-	//wiringPiISR(BTN2, INT_EDGE_BOTH, &handle);     // Bind to interrupt
-    //wiringPiISR(BTN3, INT_EDGE_BOTH, &handle);     // Bind to interrupt
-
-    system("cls || clear");
+    //system("cls || clear");
     printf("PBL - Interfaces de E/S. \n \n");
     printf("As ações seguirão a seguinte ordem: \n");
     printf("1 - Solicita a situação atual do NodeMCU. \n");
@@ -106,8 +129,8 @@ int main(int argc, char *argv[]){
     sleep(2);
 
     for(int i = 0; i <= 4; i++){           // LOOP TO ENGAGE AUTOMATIC ACTIONS          
-          if(i == 0){                   //this checks the NodeMCU status.
-               printf("Ação: Solicita a situação atual do NodeMCU. \n \n");
+            if(i == 0){                   //this checks the NodeMCU status.
+               printf("Ação: Solicita a situação atual do NodeMCU. \n");
                sleep(1);
 
                publish(client, NODEMCU_PUBLISH, "30");
@@ -115,7 +138,7 @@ int main(int argc, char *argv[]){
 
             if(i == 1){                   ///this requests analog input value
                //system("cls || clear");
-               printf("Ação: Solicita o valor da entrada analógica. \n \n");
+               printf("Ação: Solicita o valor da entrada analógica. \n");
                sleep(1);
 
                publish(client, NODEMCU_PUBLISH, "40");
@@ -127,12 +150,12 @@ int main(int argc, char *argv[]){
                sleep(1);
 
                //LOOP TO COMMUTE DIGITAL SENSORS REQUESTS
-               for (int sensorIdx = 50; sensorIdx < 59; sensorIdx++){
+               for (int idxSensor = 50; idxSensor < 59; idxSensor++){
                    sleep(2);
-                   printf("Entrada digital: %d. \n \n", sensorIdx);
+                   printf("Entrada digital: %d. \n", idxSensor);
 
                    char numStr[6] = "";
-                   sprintf(numStr, "%d", sensorIdx);               //CONVERT INTEGER TO STRING
+                   sprintf(numStr, "%d", idxSensor);               //CONVERT INTEGER TO STRING
 
                    publish(client, NODEMCU_PUBLISH, numStr);
                }
@@ -140,7 +163,7 @@ int main(int argc, char *argv[]){
 
             if(i == 3){                   //this turn on the led
                //system("cls || clear");
-               printf("Ação: Acendimento do LED da NodeMCU. \n \n");
+               printf("Ação: Acendimento do LED da NodeMCU. \n");
                sleep(1);
 
                publish(client, NODEMCU_PUBLISH, "60");
@@ -150,7 +173,7 @@ int main(int argc, char *argv[]){
                i = -1;             // RESET THE LOOP
 
                //system("cls || clear");
-               printf("Ação: Desligamento do LED do NodeMCU. \n \n");
+               printf("Ação: Desligamento do LED do NodeMCU. \n");
                sleep(1);
 
                publish(client, NODEMCU_PUBLISH, "70");
@@ -158,15 +181,12 @@ int main(int argc, char *argv[]){
 
     }
 
-   while(1){
-       /*
-        * este client opera por "interrupcao", ou seja, opera em funcao do que eh recebido no callback de recepcao de 
-        * mensagens MQTT. Portanto, neste laco principal nao eh preciso fazer nada.
-        */
-   }
+    return rc;
 }
 
-//SEND MESSAGE
+// METHOD THAT WRITES IN THE TOPIC SOME MESSAGE
+// Param: CLIENT (instance of MQTTClient), TOPIC (where to write), PAYLOAD (message to be written)
+// Return: void
 void publish(MQTTClient client, char* topic, char* payload) {
      //sleep(3);
      MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -179,14 +199,15 @@ void publish(MQTTClient client, char* topic, char* payload) {
      MQTTClient_publishMessage(client, topic, &pubmsg, &token);
      MQTTClient_waitForCompletion(client, token, TIMEOUT);
 
-     printf("Mensagem enviada! \n\rTopico: %s Mensagem: %s\n", topic, payload);
+     printf("Mensagem enviada! \n\rTopico: %s Mensagem: %s \n \n", topic, payload);
 }
 
-// RECEIVE MESSAGE
+// METHOD CALLED WHENEVER A MESSAGE IS RECEIVED IN ANY SUBSCRIBED TOPIC
+// Return: 1
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char* payload = message->payload;
 
-    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s\n", topicName, payload);
+    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s \n n", topicName, payload);
     evaluateRecData(topicName, payload);
 
     MQTTClient_freeMessage(&message);
@@ -194,8 +215,10 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
     return 1;
 }
 
+// METHOD TO VERIFY WHAT WAS RECEIVED FROM WHICH TOPIC
+// PARAM: TOPICNAME (topic), PAYLOAD (content received)
+// Return: NEW STRING 
 void evaluateRecData(char * topicName, char *payload){
-
     if(strcmp(topicName, "NODEMCU_RECEIVE") == 0){
         // 1F
         if (payload[0] == '1' && payload[1] == 'F'){
@@ -211,20 +234,19 @@ void evaluateRecData(char * topicName, char *payload){
 
         // 01
         else if (payload[0] == '0' && payload[1] == '1'){
-           char inputValue[] = "";
-           strncpy(inputValue, payload + 2, sizeof(payload) - 2);       // COPYING ONLY THE INPUT VALUE RECEIVED
-
-           printf("Resposta 01: %s. \n", inputValue);
+           char *analogInputValue = substr(payload, 2, sizeof(payload));     // COPYING ONLY THE INPUT VALUE RECEIVED
+           updateHistoric("A0", analogInputValue);
+           printf("Resposta 01: %s. \n", analogInputValue);
         }
 
         //02
         else if (payload[0] == '0' && payload[1] == '2'){
-           char digitalSensor[] = "";
-           char inputValue[] = "";
-           strncpy(digitalSensor, payload + 2, sizeof(payload) - 2);       // COPYING ONLY THE DIGITAL SENSOR RECEIVED
-           strncpy(inputValue, payload + 4, sizeof(payload) - 4);       // COPYING ONLY THE INPUT VALUE RECEIVED
+           char *digitalInputValue = substr(payload, 4, sizeof(payload));                 // COPYING ONLY THE INPUT VALUE RECEIVED
+           char *digitalSensor = substr(payload, 2, sizeof(digitalInputValue) - 4);      // COPYING ONLY THE DIGITAL SENSOR RECEIVED
 
-           printf("Resposta 02: %s , %s. \n", digitalSensor, inputValue);
+           printf("Sensor: %s. \n", digitalSensor);
+           printf("Valor Sensor: %s. \n", digitalInputValue);
+           updateHistoric(digitalSensor, digitalInputValue);
         }
 
         else{
@@ -236,4 +258,146 @@ void evaluateRecData(char * topicName, char *payload){
     else if(strcmp(topicName, "NODEMCU_PUBLISH") == 0){
          printf("Resposta NODEMCU_PUBLISH: %s. \n", payload);
     }
+}
+
+// METHOD TO CUT AND GET STRING FROM START TO END
+// PARAM: SRC (string to be splited), START (first index), END (last index)
+// Return: NEW STRING 
+char *substring( char *src, int start, int end){
+	int len = end - start;                                    // get the length of the destination string
+	char *dest = (char*)malloc(sizeof(char) * (len + 1));    // allocate (len + 1) chars for destination (+1 for extra null character)
+	strncpy(dest, (src + start), len);                       // start with start'th char and copy `len` chars into the destination
+
+	return dest;
+}
+
+void updateHistory(char *sensor, char *newValue){
+     if(strcmp(sensor, "A0") == 0){
+        array_registros[0].historic[array_registros[0].last_modified++] = newValue;
+        publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D0") == 0){
+        array_registros[1].historic[array_registros[1].last_modified++] = newValue;
+        publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D1") == 0){
+        array_registros[2].historic[array_registros[2].last_modified++] = newValue;
+        publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D2") == 0){
+       array_registros[3].historic[array_registros[3].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D3") == 0){
+       array_registros[4].historic[array_registros[4].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D4") == 0){
+       array_registros[5].historic[array_registros[5].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D5") == 0){
+       array_registros[6].historic[array_registros[6].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D6") == 0){
+       array_registros[7].historic[array_registros[7].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D7") == 0){
+       array_registros[8].historic[array_registros[8].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else if(strcmp(sensor, "D8") == 0){
+       array_registros[9].historic[array_registros[9].last_modified++] = newValue;
+       publish(client, SENSORS_HISTORY, "JSON_HERE");
+     }
+     
+     else{
+       printf("Sensor %s desconhecido!!! \n \n", sensor);
+     }     
+}
+
+// METHOD TO INITIALIZE THE VARIABLE 'array_registros'
+// Return: void
+void initArrayRegistros(){              // [A0, D0, D1, D2, D3, D4, D5, D6, D7, D8]
+     array_registros[0].sensor = "A0";
+     array_registros[0].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[0].last_modified = -1;
+
+     array_registros[1].sensor = "D0";
+     array_registros[1].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[1].last_modified = -1;
+
+     array_registros[2].sensor = "D1";
+     array_registros[2].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[2].last_modified = -1;
+
+     array_registros[3].sensor = "D2";
+     array_registros[3].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[3].last_modified = -1;
+
+     array_registros[4].sensor = "D3";
+     array_registros[4].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[4].last_modified = -1;
+
+     array_registros[5].sensor = "D4";
+     array_registros[5].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[5].last_modified = -1;
+
+     array_registros[6].sensor = "D5";
+     array_registros[6].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[6].last_modified = -1;
+
+     array_registros[7].sensor = "D6";
+     array_registros[7].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[7].last_modified = -1;
+
+     array_registros[8].sensor = "D7";
+     array_registros[8].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[8].last_modified = -1;
+
+     array_registros[9].sensor = "D8";
+     array_registros[9].historic = [0,0,0,0,0,0,0,0,0,0];
+     array_registros[9].last_modified = -1;
+}
+
+
+// METHOD TO HANDLE BUTTON INTERRUPTIONS
+// PARAM: void
+// Return: void
+void handle(void){
+     stateBtn1 = digitalRead(BTN1);                     // Get initial state of pin
+     stateBtn2 = digitalRead(BTN2);                     // Get initial state of pin
+     stateBtn3 = digitalRead(BTN3); 
+
+     /*printf("VALUE 1: %d \n \n", stateBtn1);
+     printf("VALUE 2: %d \n \n", stateBtn2);
+     printf("VALUE 3: %d \n \n", stateBtn3); */
+
+     if (stateBtn1 == 0) {
+        printf("BUTTON 1 PRESSED \n \n");
+        publish(client, NODEMCU_PUBLISH, "30");         //this checks the NodeMCU status.
+     }
+
+     if (stateBtn2 == 0) {
+        printf("BUTTON 2 PRESSED \n \n");
+    	publish(client, NODEMCU_PUBLISH, "40");         ///this requests analog input value
+     }
+
+     if (stateBtn3 == 0) {
+        printf("BUTTON 3 PRESSED \n \n");
+    	publish(client, NODEMCU_PUBLISH, "60");         // this turn on the led,
+    	sleep(2);                                       // wait 2 seconds
+    	publish(client, NODEMCU_PUBLISH, "70");         // then turns off the led
+     }
 }
