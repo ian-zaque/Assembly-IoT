@@ -1,6 +1,4 @@
 //gcc mqtt.c -o mqtt.run -lpaho-mqtt3c -lwiringPi -lwiringPiDev -lm -lrt -lcrypt
-//BIB FOR DISPLAY
-//#include "display.h"
 
 #include <lcd.h>
 #include <stdlib.h>
@@ -25,6 +23,7 @@
 #define NODEMCU_PUBLISH  "NODEMCU_PUBLISH"
 #define NODEMCU_RECEIVE  "NODEMCU_RECEIVE"
 #define SENSORS_HISTORY  "SENSORS_HISTORY"
+#define STATUS_NODEMCU   "STATUS_NODEMCU"
 
 // Pinos do Display LCD
 #define RS  13
@@ -71,7 +70,6 @@ void write_textLCD(char *linha1, char *linha2);
 void handle (void);
 
 
-
 int main(int argc, char *argv[]){
    int rc;
    MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
@@ -89,7 +87,7 @@ int main(int argc, char *argv[]){
    }
 
     MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);            //Subscribing to MQTT topic that NodeMcu publishes
-    
+
     wiringPiSetup();
     initDisplay();              // INIT LCD DISPLAY
     initArrayRegistros();      // INIT HISTORIC
@@ -98,21 +96,21 @@ int main(int argc, char *argv[]){
 	pinMode(BTN1, INPUT);                          // Set pin to output in case it's not
 	pinMode(BTN2, INPUT);                         // Set pin to output in case it's not
 	pinMode(BTN3, INPUT);                         // Set pin to output in case it's not
-    
+
     wiringPiISR(BTN1, INT_EDGE_BOTH, &handle);
     wiringPiISR(BTN2, INT_EDGE_BOTH, &handle);
     wiringPiISR(BTN3, INT_EDGE_BOTH, &handle);
-    
+ 
     stateBtn1 = digitalRead(BTN1);                     // Get initial state of pin
     stateBtn2 = digitalRead(BTN2);                     // Get initial state of pin
     stateBtn3 = digitalRead(BTN3); 
-    
+
 	piThreadCreate(BUTTON_INTERRUPTION);            // CREATING THREAD TO VERIFY INTERRUPTIONS 
     */
 
     system("cls || clear");
-    write_textLCD("PBL - SD", "IoT");
-    
+    write_textLCD("  PBL 3 - SD  ", "      IoT      ");
+
     printf("PBL 3 - IoT: A Internet das Coisas. \n \n");
     printf("As ações seguirão a seguinte ordem: \n");
     printf("1 - Solicita a situação atual do NodeMCU. \n");
@@ -125,7 +123,7 @@ int main(int argc, char *argv[]){
     for(int i = 0; i <= 4; i++){           // LOOP TO ENGAGE AUTOMATIC ACTIONS          
             if(i == 0){                   //this checks the NodeMCU status.
                printf("Ação: Solicita a situação atual do NodeMCU. \n");
-               write_textLCD("Solicitacao: ", "Status NodeMCU");
+               write_textLCD("Solicitacao:", "Status NodeMCU");
                sleep(3);
 
                publish(client, NODEMCU_PUBLISH, "30");
@@ -134,8 +132,8 @@ int main(int argc, char *argv[]){
             if(i == 1){                   ///this requests analog input value
                //system("cls || clear");
                printf("Ação: Solicita o valor da entrada analógica. \n");
-               write_textLCD("Solicitacao: ", "Sen. Analogico");
-               sleep(1);
+               write_textLCD("Solicitacao:", "Sen. Analogico");
+               sleep(3);
 
                publish(client, NODEMCU_PUBLISH, "40");
             }
@@ -143,20 +141,21 @@ int main(int argc, char *argv[]){
             if(i == 2){                   //this requests some digital input value
                //system("cls || clear");
                printf("Ação: Solicita o valor de uma das entradas digitais. \n");
-               sleep(3);
 
                //LOOP TO COMMUTE DIGITAL SENSORS REQUESTS
                for (int idxSensor = 50; idxSensor < 59; idxSensor++){
-                   sleep(2);
-                   printf("Entrada digital: %d. \n \n", idxSensor);
+                   sleep(1);
+                   printf("Sensor Digital: %d. \n \n", idxSensor);
 
                    char numStr[6] = "";
                    sprintf(numStr, "%d", idxSensor);               //CONVERT INTEGER TO STRING
-                   
+
                    char text[15];
                    strcpy(text, "Sen. Digital ");
                    strcat(text, numStr);
-                   write_textLCD("Solicitacao: ", text);
+                   write_textLCD("Solicitacao:", text);
+                   
+                   sleep(3);
                    publish(client, NODEMCU_PUBLISH, numStr);
                }
             }
@@ -164,7 +163,7 @@ int main(int argc, char *argv[]){
             if(i == 3){                   //this turn on the led
                //system("cls || clear");
                printf("Ação: Acendimento do LED da NodeMCU. \n");
-               write_textLCD("Solicitacao: ", "Ligar LED");
+               write_textLCD("Solicitacao:", "Ligar LED");
                sleep(3);
 
                publish(client, NODEMCU_PUBLISH, "60");
@@ -175,7 +174,7 @@ int main(int argc, char *argv[]){
 
                //system("cls || clear");
                printf("Ação: Desligamento do LED do NodeMCU. \n");
-               write_textLCD("Solicitacao: ", "Desligar LED");
+               write_textLCD("Solicitacao:", "Desligar LED");
                sleep(3);
 
                publish(client, NODEMCU_PUBLISH, "70");
@@ -190,7 +189,6 @@ int main(int argc, char *argv[]){
 // Param: CLIENT (instance of MQTTClient), TOPIC (where to write), PAYLOAD (message to be written)
 // Return: void
 void publish(MQTTClient client, char* topic, char* payload) {
-     //sleep(3);
      MQTTClient_message pubmsg = MQTTClient_message_initializer;
 
      pubmsg.payload = payload;
@@ -200,16 +198,12 @@ void publish(MQTTClient client, char* topic, char* payload) {
      MQTTClient_deliveryToken token;
      MQTTClient_publishMessage(client, topic, &pubmsg, &token);
      MQTTClient_waitForCompletion(client, token, TIMEOUT);
-
-     //printf("Mensagem enviada! \n\rTopico: %s Mensagem: %s \n \n", topic, payload);
 }
 
 // METHOD CALLED WHENEVER A MESSAGE IS RECEIVED IN ANY SUBSCRIBED TOPIC
 // Return: 1
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char* payload = message->payload;
-
-    //printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s \n \n", topicName, payload);
     evaluateRecData(topicName, payload);
 
     MQTTClient_freeMessage(&message);
@@ -217,8 +211,12 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
     return 1;
 }
 
+
+// METHOD TO AUTO RECONNECT IF MQTT IS DOWN
+// PARAM: CONTEXT (data from MQTT_OPTS), CAUSE (why caiu)
+//
 void reconnect(void *context, char *cause){
-     printf("CAIU AAAAAA");
+     printf("CAIU AAAAAA!!!");
      /*int rc = MQTTClient_connect(client, context);
 
     if (rc != MQTTCLIENT_SUCCESS){
@@ -232,17 +230,18 @@ void reconnect(void *context, char *cause){
 
 // METHOD TO VERIFY WHAT WAS RECEIVED FROM WHICH TOPIC
 // PARAM: TOPICNAME (topic), PAYLOAD (content received)
-// Return: NEW STRING 
 void evaluateRecData(char * topicName, char *payload){
     if(strcmp(topicName, "NODEMCU_RECEIVE") == 0){
         // 1F
-        if (payload[0] == '1' && payload[1] == 'F'){
-           write_textLCD("Resposta: ", "NodeMCU not ok");
-        }
+        if (payload[0] == '1' && payload[1] == 'F'){ 
+            write_textLCD("Resposta: ", "NodeMCU not ok");
+            publish(client, STATUS_NODEMCU, "NodeMCU not Ok");
+         }
 
         // 00
-        else if (payload[0] == '0' && payload[1] == '0'){
-           write_textLCD("Resposta: ", "NodeMCU Ok");
+        else if (payload[0] == '0' && payload[1] == '0'){ 
+             write_textLCD("Resposta: ", "NodeMCU Ok");
+             publish(client, STATUS_NODEMCU, "NodeMCU Ok");
         }
 
         // 01
@@ -251,31 +250,30 @@ void evaluateRecData(char * topicName, char *payload){
 
            int value = atoi(analogInputValue);            // CONVERT STRING TO INT
            updateHistory("A0", value);
-           write_textLCD("Sen. Analogico: ", analogInputValue);
+           write_textLCD("Sen. Analogico:", analogInputValue);
         }
 
         //02
         else if (payload[0] == '0' && payload[1] == '2'){
-           // COPYING THE DIGITAL SENSOR & INPUT VALUE RECEIVED       
-           char *digitalSensor = substring(payload, 2, 4);
-           char *digitalInputValue = substring(payload, 4, sizeof(payload)*sizeof(payload));
+           // COPYING THE DIGITAL SENSOR & INPUT VALUE RECEIVED
+           // Ex.: 02A01234   
+           char *digitalSensor = substring(payload, 2, 4);           // A0
+           char *digitalInputValue = substring(payload, 4, sizeof(payload)*sizeof(payload));      //1234
 
            int value = atoi(digitalInputValue);         // CONVERT STRING TO INT
-           //printf("Sensor: %s. \n", digitalSensor);
-           //printf("Valor Sensor: %s , %d. \n", digitalInputValue, value);
            char text[15];
            strcpy(text, "Sen. Digital ");
            strcat(text, digitalSensor);
-           
+
            write_textLCD(text, digitalInputValue);
            updateHistory(digitalSensor, value);
         }
 
         else{
-            write_textLCD("Resposta: ", "NodeMCU not ok");
+            write_textLCD("Resposta:", "NodeMCU not ok");
         }
     }
-    
+
     return;
 }
 
@@ -289,60 +287,63 @@ char *substring(char *src, int start, int end){
 	return dest;
 }
 
+
+// METHOD TO CREATE OR UPDATE HISTORIC FROM SENSOR
+// PARAM: SENSOR (name of the sensor to be updated), NEWVALUE (value received from sensor)
 void updateHistory(char *sensor, int newValue){     
      int idx = 0;
      struct timeval now;                        // timestamp
      gettimeofday(&now, NULL);
-     
+
      char *json = (char*)malloc( (sizeof(char) * (200)) + 1 );
      char sensorTopic[20];
      strcpy(sensorTopic, "SENSORS_HISTORY/");
      strcat(sensorTopic, sensor);
-     
+
      if(strcmp(sensor, "A0") == 0){                       
         idx = ++array_registros[0].last_modified;
         if(array_registros[0].last_modified >= 9){ array_registros[0].last_modified = -1; }
-        
+
         array_registros[0].historic[idx] = newValue;
         array_registros[0].timestamps[idx] = now.tv_usec;
         strcpy(json, createJson(0));
         publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D0") == 0){
         idx = ++array_registros[1].last_modified;
         if(array_registros[1].last_modified >= 9){ array_registros[1].last_modified = -1; }
-        
+
         array_registros[1].historic[idx] = newValue;
         array_registros[1].timestamps[idx] = now.tv_usec;
         strcpy(json, createJson(1));
         publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D1") == 0){
         idx = ++array_registros[2].last_modified;
         if(array_registros[2].last_modified >= 9){ array_registros[2].last_modified = -1; }
-        
+
         array_registros[2].historic[idx] = newValue;
         array_registros[2].timestamps[idx] = now.tv_usec;
         strcpy(json, createJson(2));
         publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D2") == 0){
        idx = ++array_registros[3].last_modified;
        if(array_registros[3].last_modified >= 9){ array_registros[3].last_modified = -1; }
-        
+
        array_registros[3].historic[idx] = newValue;
        array_registros[3].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(3));
        publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D3") == 0){
        idx = ++array_registros[4].last_modified;
        if(array_registros[4].last_modified >= 9){ array_registros[4].last_modified = -1; }
-        
+
        array_registros[4].historic[idx] = newValue;
        array_registros[4].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(4));
@@ -352,57 +353,57 @@ void updateHistory(char *sensor, int newValue){
      else if(strcmp(sensor, "D4") == 0){
        idx = ++array_registros[5].last_modified;
        if(array_registros[5].last_modified >= 9){ array_registros[5].last_modified = -1; }
-        
+
        array_registros[5].historic[idx] = newValue;
        array_registros[5].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(5));
        publish(client, sensorTopic, createJson(5));
      }
-     
+
      else if(strcmp(sensor, "D5") == 0){
        idx = ++array_registros[6].last_modified;
        if(array_registros[6].last_modified >= 9){ array_registros[6].last_modified = -1; }
-        
+
        array_registros[6].historic[idx] = newValue;
        array_registros[6].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(6));
        publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D6") == 0){
        idx = ++array_registros[7].last_modified;
        if(array_registros[7].last_modified >= 9){ array_registros[7].last_modified = -1; }
-        
+
        array_registros[7].historic[idx] = newValue;
        array_registros[7].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(7));
        publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D7") == 0){
        idx = ++array_registros[8].last_modified;
        if(array_registros[8].last_modified >= 9){ array_registros[8].last_modified = -1; }
-        
+
        array_registros[8].historic[idx] = newValue;
        array_registros[8].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(8));
        publish(client, sensorTopic, json);
      }
-     
+
      else if(strcmp(sensor, "D8") == 0){
        idx = ++array_registros[9].last_modified;
        if(array_registros[9].last_modified >= 9){ array_registros[9].last_modified = -1; }
-        
+
        array_registros[9].historic[idx] = newValue;
        array_registros[9].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(9));
        publish(client, sensorTopic, json);
      }
-     
+
      else{
        printf("Sensor %s desconhecido!!! \n \n", sensor);
      }
-     
+
      /*for(int z = 0; z < 10; z++){
        printf("Array Registros: %d , %d , %d \n", array_registros[0].last_modified, array_registros[0].historic[z], array_registros[0].timestamps[z]);
      } */
@@ -436,9 +437,9 @@ char *createJson(int index){
            strcat(json, valueHistoric);
         }
      }
-     
+
      strcat(json, "\", \"timestamps\": ");           //Ex.: { "\sensor\":\"A0\", \"historico\":
-     
+
      // LOOP TO CONCAT THE TIMESTAMPS TO JSON
      for(int j = 0; j < 10; j++){
         char *valueTimestamp = (char*)malloc((sizeof(char) * (50)) + 1);
@@ -476,10 +477,10 @@ void initArrayRegistros(){              // [A0, D0, D1, D2, D3, D4, D5, D6, D7, 
      array_registros[7].sensor = "D6";
      array_registros[8].sensor = "D7";
      array_registros[9].sensor = "D8";
-     
+
      for(int i = 0; i < 10; i++){
         array_registros[i].last_modified = -1;
-        
+
         for(int j = 0; j < 10; j++){
            array_registros[i].historic[j] = 0;
            array_registros[i].timestamps[j] = 0;
@@ -518,6 +519,8 @@ void handle(void){
      }
 }
 
+
+//////////////////////// METHODS FOR LCD //////////////////////////////
 /**
  * Realiza as rotinas de inicializacao do display
  */
