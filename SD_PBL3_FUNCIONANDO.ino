@@ -150,12 +150,15 @@ void EnviaEstadoOutputMQTT(void){
     else if(COMANDO == "53"){
       String sensor_name_D3 = "D3";
       String entrada_D3 = String(digitalRead(sensor_D3));
-      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D3+entrada_D3);
-      String entrada_D4 = String(digitalRead(sensor_D4));
-      String sensor_name_D4="D4";
-      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D4+entrada_D4);      
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D3+entrada_D3);     
     }
     
+    else if(COMANDO == "54"){
+      String sensor_name_D4="D4";
+      String entrada_D4 = String(digitalRead(sensor_D4));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D4+entrada_D4); 
+    }
+
     else if(COMANDO =="55"){
       String sensor_name_D5 = "D5";
        String entrada_D5 = String(digitalRead(sensor_D5));
@@ -263,7 +266,7 @@ void setup() {
 
 
   // Setup project
-   pinMode(LED_BUILTIN,OUTPUT);
+  pinMode(LED_BUILTIN,OUTPUT);
   pinMode(A0,OUTPUT);
   pinMode(sensor_zero,OUTPUT);
   pinMode(sensor_D1,OUTPUT);
@@ -277,7 +280,6 @@ void setup() {
   Serial.begin(9600);
   setup_wifi();
   initMqtt();
- 
 }
 
 void loop() {
