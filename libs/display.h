@@ -1,42 +1,62 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include <lcd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wiringPi.h>
+
+// Pinos do Display LCD
+#define RS  13
+#define E   18
+#define D4  21
+#define D5  24
+#define D6  26
+#define D7  27
+
+int display_lcd;
+
 
 /**
- * Limpa os dados escritos no display
+ * Escreve em duas linhas do display LCD
+ * @param linha1 - Primeira linha do display
+ * @param linha2 - Segunda linha do display
 */
-extern void clearDisplay();
+void write_textLCD(char *linha1, char *linha2) {
+    lcdHome(display_lcd);
+    lcdClear(display_lcd);
+    
+    // escreve na primeira linha
+    lcdPosition(display_lcd, 0, 0);
+    lcdPuts(display_lcd, linha1);
+
+    // escreve na segunda linha
+    lcdPosition(display_lcd, 0, 1);
+    lcdPuts(display_lcd, linha2);
+}
+
+/**
+ * Escreve em uma linha do display LCD
+ * @param linha - Linha do display
+ * @param texto - texto a ser escrito no display
+*/
+void write_textLCD_linha(int linha, char *texto) {
+    lcdHome(display_lcd);
+    
+    lcdPosition(display_lcd, 0, linha);
+    lcdPuts(display_lcd, texto);
+}
 
 /**
  * Realiza as rotinas de inicializacao do display
-*/
-extern void initDisplay();
-
-/**
- * Move o cursor do display
-*/
-extern void moveCursor();
-
-/**
- * Escreve um caractere no display de LCD
- * @param c - caractere a ser escrito no display
-*/
-extern void write_lcd(char c);
-
-/**
- * Escreve um texto no display LCD
- * @param  palavra[] - texto a ser escrito no display
  */
-void write_textLCD(char palavra[]){
-    clearDisplay(); // limpa o display
-    int i = 0;
+void initDisplay(){
+    display_lcd = lcdInit(2, 16, 4, RS, E, D4, D5, D6, D7, 0, 0, 0, 0) ;
+    lcdHome(display_lcd);
+    lcdClear(display_lcd);
 
-    while(palavra[i] != '\0'){
-	    printf("%c", palavra[i]);
-        write_lcd(palavra[i]); // exibe no display cada caractere
-        i++;
-    }
-    printf("\n");
-}
+}  
+    
 
 #endif
