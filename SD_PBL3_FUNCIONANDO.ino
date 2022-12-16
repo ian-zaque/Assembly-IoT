@@ -122,50 +122,74 @@ void EnviaEstadoOutputMQTT(void){
  
     if(COMANDO == "30"){
       client.publish(TOPICO_PUBLISH,operating_normally);      
-    }else if(COMANDO == "40"){
+    }
+
+    else if(COMANDO == "40"){
       String entrada = String(analogRead(A0));
       client.publish(TOPICO_PUBLISH,analog_entry_measure +entrada);
-    //  client.publish(TOPICO_PUBLISH,entrada);
-    }else if(COMANDO =="50"){
+    }
+    
+    else if(COMANDO =="50"){
       String entrada_D0 = String(digitalRead(sensor_zero));
       String sensor_D0 = "D0";
       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_D0+entrada_D0);          
-    }else if(COMANDO == "51"){
+    }
+    
+    else if(COMANDO == "51"){
       String entrada_D1 = String(digitalRead(sensor_D1));
       String sensor_name_D1 = "D1";
       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D1+entrada_D1);      
-    }else if(COMANDO == "52"){
+    }
+    
+    else if(COMANDO == "52"){
       String sensor_name_D2 = "D2";
       String entrada_D2 = String(digitalRead(sensor_D2));
       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D2+entrada_D2);
-    }else if(COMANDO == "53"){
+    }
+    
+    else if(COMANDO == "53"){
       String sensor_name_D3 = "D3";
       String entrada_D3 = String(digitalRead(sensor_D3));
-      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D3+entrada_D3);
-      String entrada_D4 = String(digitalRead(sensor_D4));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D3+entrada_D3);     
+    }
+    
+    else if(COMANDO == "54"){
       String sensor_name_D4="D4";
-      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D4+entrada_D4);      
-    }else if(COMANDO =="55"){
+      String entrada_D4 = String(digitalRead(sensor_D4));
+      client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D4+entrada_D4); 
+    }
+
+    else if(COMANDO =="55"){
       String sensor_name_D5 = "D5";
        String entrada_D5 = String(digitalRead(sensor_D5));
        client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D5+entrada_D5);
-    }else if(COMANDO =="56"){
+    }
+    
+    else if(COMANDO =="56"){
       String sensor_name_D6 ="D6";
       String entrada_D6 = String(digitalRead(sensor_D6));
       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D6+entrada_D6);           
-    }else if(COMANDO == "57"){
+    }
+    
+    else if(COMANDO == "57"){
       String sensor_name_D7="D7";
       String entrada_D7 = String(digitalRead(sensor_D7));
       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D7+entrada_D7);
-    }else if(COMANDO == "58"){
+    }
+    
+    else if(COMANDO == "58"){
       String sensor_name_D8="D8";
       String entrada_D8= String(digitalRead(sensor_D8));
       client.publish(TOPICO_PUBLISH,digital_input_status+sensor_name_D8+entrada_D8);      
-    }else if(COMANDO=="60"){
-      digitalWrite(LED_BUILTIN,HIGH);
-      client.publish(TOPICO_PUBLISH,operating_normally);
-    }else if(COMANDO == "70"){
+    }
+    
+    else if(COMANDO=="60"){
       digitalWrite(LED_BUILTIN,LOW);
+      client.publish(TOPICO_PUBLISH,operating_normally);
+    }
+    
+    else if(COMANDO == "70"){
+      digitalWrite(LED_BUILTIN,HIGH);
       client.publish(TOPICO_PUBLISH,operating_normally);
     }
     
@@ -242,7 +266,7 @@ void setup() {
 
 
   // Setup project
-   pinMode(LED_BUILTIN,OUTPUT);
+  pinMode(LED_BUILTIN,OUTPUT);
   pinMode(A0,OUTPUT);
   pinMode(sensor_zero,OUTPUT);
   pinMode(sensor_D1,OUTPUT);
@@ -256,7 +280,6 @@ void setup() {
   Serial.begin(9600);
   setup_wifi();
   initMqtt();
- 
 }
 
 void loop() {
