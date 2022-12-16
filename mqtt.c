@@ -268,7 +268,7 @@ void updateHistory(char *sensor, int newValue){
         if(array_registros[0].last_modified >= 9){ array_registros[0].last_modified = -1; }
 
         array_registros[0].historic[idx] = newValue;
-        array_registros[0].timestamps[idx] = now.tv_usec;
+        array_registros[0].timestamps[idx] = now.tv_sec;
         strcpy(json, createJson(0));
         publish(client, sensorTopic, json);
      }
@@ -278,7 +278,7 @@ void updateHistory(char *sensor, int newValue){
         if(array_registros[1].last_modified >= 9){ array_registros[1].last_modified = -1; }
 
         array_registros[1].historic[idx] = newValue;
-        array_registros[1].timestamps[idx] = now.tv_usec;
+        array_registros[1].timestamps[idx] = now.tv_sec;
         strcpy(json, createJson(1));
         publish(client, sensorTopic, json);
      }
@@ -288,7 +288,7 @@ void updateHistory(char *sensor, int newValue){
         if(array_registros[2].last_modified >= 9){ array_registros[2].last_modified = -1; }
 
         array_registros[2].historic[idx] = newValue;
-        array_registros[2].timestamps[idx] = now.tv_usec;
+        array_registros[2].timestamps[idx] = now.tv_sec;
         strcpy(json, createJson(2));
         publish(client, sensorTopic, json);
      }
@@ -298,7 +298,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[3].last_modified >= 9){ array_registros[3].last_modified = -1; }
 
        array_registros[3].historic[idx] = newValue;
-       array_registros[3].timestamps[idx] = now.tv_usec;
+       array_registros[3].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(3));
        publish(client, sensorTopic, json);
      }
@@ -308,7 +308,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[4].last_modified >= 9){ array_registros[4].last_modified = -1; }
 
        array_registros[4].historic[idx] = newValue;
-       array_registros[4].timestamps[idx] = now.tv_usec;
+       array_registros[4].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(4));
        publish(client, sensorTopic, json);
      }
@@ -318,7 +318,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[5].last_modified >= 9){ array_registros[5].last_modified = -1; }
 
        array_registros[5].historic[idx] = newValue;
-       array_registros[5].timestamps[idx] = now.tv_usec;
+       array_registros[5].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(5));
        publish(client, sensorTopic, createJson(5));
      }
@@ -328,7 +328,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[6].last_modified >= 9){ array_registros[6].last_modified = -1; }
 
        array_registros[6].historic[idx] = newValue;
-       array_registros[6].timestamps[idx] = now.tv_usec;
+       array_registros[6].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(6));
        publish(client, sensorTopic, json);
      }
@@ -338,7 +338,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[7].last_modified >= 9){ array_registros[7].last_modified = -1; }
 
        array_registros[7].historic[idx] = newValue;
-       array_registros[7].timestamps[idx] = now.tv_usec;
+       array_registros[7].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(7));
        publish(client, sensorTopic, json);
      }
@@ -348,7 +348,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[8].last_modified >= 9){ array_registros[8].last_modified = -1; }
 
        array_registros[8].historic[idx] = newValue;
-       array_registros[8].timestamps[idx] = now.tv_usec;
+       array_registros[8].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(8));
        publish(client, sensorTopic, json);
      }
@@ -358,7 +358,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[9].last_modified >= 9){ array_registros[9].last_modified = -1; }
 
        array_registros[9].historic[idx] = newValue;
-       array_registros[9].timestamps[idx] = now.tv_usec;
+       array_registros[9].timestamps[idx] = now.tv_sec;
        strcpy(json, createJson(9));
        publish(client, sensorTopic, json);
      }
