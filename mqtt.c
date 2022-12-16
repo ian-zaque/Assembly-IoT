@@ -187,6 +187,7 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
 // PARAM: CONTEXT (data from MQTT_OPTS), CAUSE (why caiu)
 void reconnect(void *context, char *cause){
      printf("Broker foi desconectado... Tentando novamente \n \n");
+     publish(client, STATUS_NODEMCU, "NodeMCU not Ok");
      int rc = MQTTClient_connect(client, context);
 
     if (rc != MQTTCLIENT_SUCCESS){
