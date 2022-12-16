@@ -206,12 +206,12 @@ void evaluateRecData(char * topicName, char *payload){
     if(strcmp(topicName, "NODEMCU_RECEIVE") == 0){
         if (payload[0] == '1' && payload[1] == 'F'){                  // 1F
             write_textLCD("Resposta: ", "NodeMCU not ok");
-            publish(client, STATUS_NODEMCU, "NodeMCU not Ok");
+            publish(client, STATUS_NODEMCU, "Desconectado");
          }
 
         else if (payload[0] == '0' && payload[1] == '0'){             // 00
              write_textLCD("Resposta: ", "NodeMCU Ok");
-             publish(client, STATUS_NODEMCU, "NodeMCU Ok");
+             publish(client, STATUS_NODEMCU, "Conectado");
         }
 
         else if (payload[0] == '0' && payload[1] == '1'){             // 01
@@ -269,7 +269,7 @@ void updateHistory(char *sensor, int newValue){
         if(array_registros[0].last_modified >= 9){ array_registros[0].last_modified = -1; }
 
         array_registros[0].historic[idx] = newValue;
-        array_registros[0].timestamps[idx] = now.tv_sec;
+        array_registros[0].timestamps[idx] = now.tv_usec;
         strcpy(json, createJson(0));
         publish(client, sensorTopic, json);
      }
@@ -279,7 +279,7 @@ void updateHistory(char *sensor, int newValue){
         if(array_registros[1].last_modified >= 9){ array_registros[1].last_modified = -1; }
 
         array_registros[1].historic[idx] = newValue;
-        array_registros[1].timestamps[idx] = now.tv_sec;
+        array_registros[1].timestamps[idx] = now.tv_usec;
         strcpy(json, createJson(1));
         publish(client, sensorTopic, json);
      }
@@ -289,7 +289,7 @@ void updateHistory(char *sensor, int newValue){
         if(array_registros[2].last_modified >= 9){ array_registros[2].last_modified = -1; }
 
         array_registros[2].historic[idx] = newValue;
-        array_registros[2].timestamps[idx] = now.tv_sec;
+        array_registros[2].timestamps[idx] = now.tv_usec;
         strcpy(json, createJson(2));
         publish(client, sensorTopic, json);
      }
@@ -299,7 +299,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[3].last_modified >= 9){ array_registros[3].last_modified = -1; }
 
        array_registros[3].historic[idx] = newValue;
-       array_registros[3].timestamps[idx] = now.tv_sec;
+       array_registros[3].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(3));
        publish(client, sensorTopic, json);
      }
@@ -309,7 +309,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[4].last_modified >= 9){ array_registros[4].last_modified = -1; }
 
        array_registros[4].historic[idx] = newValue;
-       array_registros[4].timestamps[idx] = now.tv_sec;
+       array_registros[4].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(4));
        publish(client, sensorTopic, json);
      }
@@ -319,7 +319,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[5].last_modified >= 9){ array_registros[5].last_modified = -1; }
 
        array_registros[5].historic[idx] = newValue;
-       array_registros[5].timestamps[idx] = now.tv_sec;
+       array_registros[5].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(5));
        publish(client, sensorTopic, createJson(5));
      }
@@ -329,7 +329,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[6].last_modified >= 9){ array_registros[6].last_modified = -1; }
 
        array_registros[6].historic[idx] = newValue;
-       array_registros[6].timestamps[idx] = now.tv_sec;
+       array_registros[6].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(6));
        publish(client, sensorTopic, json);
      }
@@ -339,7 +339,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[7].last_modified >= 9){ array_registros[7].last_modified = -1; }
 
        array_registros[7].historic[idx] = newValue;
-       array_registros[7].timestamps[idx] = now.tv_sec;
+       array_registros[7].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(7));
        publish(client, sensorTopic, json);
      }
@@ -349,7 +349,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[8].last_modified >= 9){ array_registros[8].last_modified = -1; }
 
        array_registros[8].historic[idx] = newValue;
-       array_registros[8].timestamps[idx] = now.tv_sec;
+       array_registros[8].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(8));
        publish(client, sensorTopic, json);
      }
@@ -359,7 +359,7 @@ void updateHistory(char *sensor, int newValue){
        if(array_registros[9].last_modified >= 9){ array_registros[9].last_modified = -1; }
 
        array_registros[9].historic[idx] = newValue;
-       array_registros[9].timestamps[idx] = now.tv_sec;
+       array_registros[9].timestamps[idx] = now.tv_usec;
        strcpy(json, createJson(9));
        publish(client, sensorTopic, json);
      }
@@ -415,6 +415,7 @@ char *createJson(int index){
            strcat(json, valueTimestamp);
         }
      }
+     printf("JSON Sensor %s: %s \n \n", array_registros[index].sensor, json);
      return json;
 }
 
