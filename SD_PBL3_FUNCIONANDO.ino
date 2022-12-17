@@ -286,5 +286,4 @@ void loop() {
   ArduinoOTA.handle();
   EnviaEstadoOutputMQTT();  // Envia um dado para quem solicita
   client.loop();
-  delay(3000);
 }
