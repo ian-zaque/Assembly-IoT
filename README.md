@@ -11,10 +11,19 @@ Em continuação do <a href="https://github.com/ian-zaque/pbl_SD_1">Problema 1</
 
 A comunicação será iniciada pelo SBC que envia pela UART (Universal Asynchronous Receiver / Transmitter) os dados de requisição para o NodeMcu serialmente que responde adequadamente seguindo o protocolo de comandos. Além de monitorar sensores e manipular o LED imbutido do NodeMcu, o sistema deve exibir no display anexo as informações respectivas a requisição realizada. É possível ler o problema completo <a href="./Problema 2 - Interfaces de E-S.pdf">neste link</a>.
 
-<h1>UART</h1>
-UART trata-se de um controlador de comunicação serial, é um componente do computador capaz de enviar e trocar mensagens com outros sistemas como terminais, modens e outros computadores. A comunicação serial se dá através de bytes de dados transmitidos sequencialmente de uma fonte até um destino bit a bit. No destino os bits são reunidos, formando os bytes enviados. É necessário que a fonte e o destino compartilhem uma taxa de transmissão de BPS (bits per second) para a comunicação assíncrona ser de fato realizada com sucesso. Essa taxa é chamada Baud Rate e por padrão do NodeMcu é definida em 9600 bps.
+<h1>MQTT</h1>
+O protocolo MQTT foi proposto pelo Dr. Andy Stanford-Clark, da IBM, e Arlen Nipper (Eurotech) em 1999. Com o objetivo de desenvolver um protocolo aberto, simples e fácil de implementar. No entanto, o protocolo só se tornou público em 2010 na versão 3.1, disponibilizada pela IBM, e em 2014 veio a se tornar um padrão OASIS com sua versão 3.1.1. 
 
-O frame UART é constituído por 2 bits de início e fim, 7 ou 8 bits de dados e mais um bit opcional de paridade. Esse frame deve ser conhecido pela fonte e pelo destino a fim de que os dois ouçam e enviem de igual forma.
+O MQTT é um protocolo de camada de aplicação que opera sobre o protocolo TCP na camada de transporte. Foi desenvolvido para ser aplicado em ambientes com redes e dispositivos restritos. Seu funcionamento é baseado em uma arquitetura de publicação/assinatura. Neste tipo de arquitetura existem dois elementos principais: o broker e o cliente. O broker pode ser visto como um controlador e é o responsável por coordenar o fluxo de mensagem através dos tópicos, que podem ser vistos como endereços de memória especiais. Os clientes são os nós finais, responsáveis por gerar e consumir os dados. 
+
+O funcionamento de sistemas MQTT funciona da seguinte forma: Os clientes se anunciam ao broker, indicando qual é a sua função (publicar ou assinar) e qual o tópico. Em sequência, o broker cria o tópico e gerencia o fluxo de mensagens entre o publicador e o assinante. Tudo feito sobre o protocolo TCP na camada de transporte. 
+
+A comunicação dentro de um sistema MQTT é feita através de troca de mensagens. Essas mensagens do protocolo são compostas por três campos: cabeçalho fixo, variável e o payload. O cabeçalho fixo tem o tamanho fixo de 2 bytes e está sempre presente nas mensagens. Este cabeçalho tem a finalidade de comportar as informações da mensagem como, o tipo, flags de configuração e o tamanho máximo da mensagem. O cabeçalho variável comporta informações de controle, para sinalizar as ações que o broker deve executar. Este cabeçalho existe em alguns tipos de mensagens e está localizado entre o cabeçalho fixo e o payload. Por fim, a mensagem MQTT apresenta um payload, no qual os dados estão contidos. Uma mensagem MQTT pode ter um tamanho máximo de 256 MB. Vale ressaltar que apenas o cabeçalho fixo é obrigatório nas mensagens, os outros campos podem variar de acordo com o tipo da mensagem. 
+
+O protocolo MQTT disponibiliza três níveis de QoS, que é uma ferramenta que permite determinar quais dispositivos e serviços terão maior prioridade de conexão. Uma mensagem MQTT pode ser configurada para assumir um desses níveis, de acordo com seu nível de confiabilidade de envio e recebimento das mensagens. O nível zero, garante apenas o envio, não se preocupando com o recebimento. O nível um, exige que o recebimento seja confirmado pelo menos uma vez, não impedindo múltiplos recebimentos. O nível dois, garante que a mensagem seja recebida exatamente uma vez, impedindo múltiplos recebimentos. 
+
+O protocolo MQTT apresenta diversas vantagens para IoT, IIoT, e entre essas vantagens esta o baixo consumo de recursos, onde o MQTT tem um baixo consumo de memória, havendo então uma pouca necessidade de um processamento forte para que o transporte de mensagens seja realizado, também há um baixo consumo de banda. A alta confiabilidade, que é feita través de configurações do QoS e sua alta segurança, onde suas mensagens são protegidas através do uso de certificados SSL, o MQTT suporta diversos tipos de mecanismos para proteção de informações e de autenticações que podem ser configurados com facilidade pelo cliente diretamente no Broker. 
+
 
 <h1>Protocolos de Comunicação</h1>
 A comunicação entre o SBC e o NodeMcu segue um padrão definido no corpo do problema, contendo 2 bytes por mensagem. Um byte de requisição que especifica qual função será executada e um byte de endereço do sensor que é desejado ser lido. Quando não há um sensor a ser lido, o segundo byte é dado como 0. Nas tabelas abaixo é possível ver o protocolo de requisição e o de resposta.
@@ -79,7 +88,7 @@ No índice 4, a quinta requisição: desligamento do LED imbutido.
 O diagrama a seguir resume o fluxo da solução do problema:
 
 <div align="justify">
-    <img src="./images/diagrama.png">
+    <img src="./images/arquitetura.png">
 </div>
 
 <br>
