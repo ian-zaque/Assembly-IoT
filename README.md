@@ -119,8 +119,44 @@ Foram criadas algumas funções para modularização e consistência do código.
 
 
 <h2>Comunicação SBC - Interface Web</h2>
+<h4>API</h4>
+Como decisão de projeto foi desenvolvido uma api, na linguagem Javascript, .para se comunicar com a SBC e a interface web para visualização  dos dados graficamente. E está estruturado nas seguintes ordens: 1- Comunicação Cliente MQTT,  2- Comunicação servidor HTTP e 3- Interface web HTML
+<h6>Passo 1</h6>
+A API trabalha com dois protocolos de comunicação  MQTT e o HTTP. Internamente é executado um cliente MQTT (figura 5) para comunicação direta com a SBC, este cliente recebe todos os dados formatados que a SBC tratou, esses dados são referentes aos valores das últimas dez medições dos sensores. Os dados chegam em formato de string JSON o qual é transformado em um objeto JSON(figura 6) e armazenado em um arquivo .JSON (fiigura 7) que temos como base de dados. Para que isso fosse possível a API teve que  se cadastrar em cada tópico relacionado a uma medição do sistema (figura 8).
+
+![Imagem da Configuracao MQTT](./images/struct_historic.png)
+
+![Imagem do recebimento de dados](./images/struct_historic.png)
+
+![Imagem do armazenamento dos dados](./images/struct_historic.png)
+
+![Imagem dos inscrição dos tópicos](./images/struct_historic.png)
 
 
+<h6>Passo 2</h2>
+
+API executa um servidor HTTP, na porta 3000, o qual fica esperando a comunicação da interface web via requisições HTTP. 
+O servidor dispõe de três rotas de acesso “/comando, /situacaoNode, /sensores/:sensor”:
+<ul>
+    <li>“/comando”: Rota responsável por enviar um comando de ação via protocolo MQTT que será executado na ESP8266. Para esse caso, é enviado a informação de alteração to tempo de medição dos sensores do ESP8266</li>
+    <li>“/situacaoNode”: essa rota retorna apenas qual o status da ESP8266 se está conectado ou desconectado. Se for conectado sabemos que o dispositivo está funcionando corretamente, caso contrário o dispositivo não está funcionando corretamente. </li>
+        <li>“/sensores/:sensor”:  Essa rota recebe como parâmetro o nome do sensor que queremos visualizar os dados e como resposta é retornado um objeto JSON que remete aos dados das medições mais atualizadas dos sensores naquele momento. para a execução dessa tarefa é feita a leitura do arquivo JSON(figura X) no momento que é identificado de qual sensor queremos visualizar os dados. 
+ </li>    
+</ul>
+
+![Imagem da leitura do arquivo JSON](./images/struct_historic.png)
+    
+   <h6>Passo 3  - Interface Web</h6>
+   É uma simples página HTML (figura 9) que permite o usuário interagir com o sistema. Ela se comunica diretamente com a API via protocolo HTTP(figura 10). A interface dispõe de nove botões que fazem referência aos sensores disponíveis na ESP8266, através desses botões o usuário pode visualizar um gráfico de medições referente aos dados medidos pelo sensor escolhido. O usuário pode alterar o tempo em que a ESP8266 realiza as medições dos dados dos sensores.
+A Interface Web se comunica apenas com a API do sistema, não conhecendo os outros elementos que compõem o  sistema como a SBC, a ESP8266, o Broker. 
+
+![Imagem daInteface](./images/struct_historic.png)
+
+![Imagem da conexao HTTP](./images/struct_historic.png)
+
+
+
+    
 <h1>Conclusão e Considerações Finais</h1>
 
 
