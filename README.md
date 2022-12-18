@@ -51,7 +51,7 @@ HTTP (Hypertext Transfer Protocol) é um protocolo que permite a obtenção de r
 Clientes e servidores se comunicam trocando mensagens individuais. As mensagens enviadas pelo cliente são chamadas de solicitações (requests) ou requisições, e as mensagens enviadas pelo servidor como resposta são chamadas de respostas (responses). 
 
 <h2>SBC</h2>
-Um Single-Board Computer (SBC) é um microcomputador construído sobre uma placa única possuindo um microprocessador, memória de acesso randômico (RAM) e suporte para dispositivos de entrada/saída. A simplicidade de sua arquitetura contribui para um baixo consumo de energia e boa performance de CPU. Atualmente, os SBCs têm sido utilizados em diversos ramos como o de instrumentação médica, computação embarcada e indústria automobilística. Seu tamanho e custo reduzido são as principais vantagens para utilizá-los quando comparados aos tradicionais computadores do tipo desktop. São uma solução rápida e integrada de software e hardware e amplamente utilizados para comunicação entre dispositivos muito específicos como sistemas robóticos e controladores de processos.
+Um Single-Board Computer (SBC) é um microcomputador construído sobre uma placa única possuindo um microprocessador, memória de acesso randômico (RAM) e suporte para dispositivos de entrada/saída. A simplicidade de sua arquitetura contribui para um baixo consumo de energia e boa performance de CPU. Atualmente, os SBCs têm sido utilizados em diversos ramos como o de instrumentação médica, computação embarcada e indústria automobilística. Seu tamanho e custo reduzido são as principais vantagens para utilizá-los quando comparados aos tradicionais computadores do tipo desktop. São uma solução rápida e integrada de software e hardware e amplamente utilizados para comunicação entre dispositivos muito específicos como sistemas robóticos e controladores de processos. Na solução do 3º problema foi utilizado a Orange Pi PC Plus.
 
 <h2>ESP8266-NodeMCU</h2>
 O módulo ESP8266 é um microcontrolador da empresa Espressif que trata-se basicamente de um WiFI-SOC, ou seja, ele possui a capacidade de se conectar a uma rede WiFi, pode atuar como uma aplicação stand-alone, onde ele não precisa de nenhum outro componente para funcionar, ou como um servidor escravo MCU (Microcontroller Unit). Na segunda condição ele funciona como um adaptador WiFi para outro microcontrolador, como por exemplo Arduino. 
@@ -67,17 +67,22 @@ O diagrama a seguir resume o fluxo da solução do problema:
 
 <h2>Comunicação SBC - ESP</h2>
 O funcionamento do código da SBC opera na seguinte ordem:
-    1. Definição de bibliotecas, variáveis globais, estruturas e protótipos de funções.
-    2. Definição de variáveis locais, configuração MQTT e LCD Display.
-    3. Inicialização IHM Display, IHM Terminal.
-    4. Envio e recebimento automático de comandos e respostas via MQTT.
-    5. Verificação e tratamento de respostas.  
-    6. Atualização de histórico de medições dos sensores.
-    7. Publicação de dados dos sensores e NodeMCU para IHM Web.
+
+1. Definição de bibliotecas, variáveis globais, estruturas e protótipos de funções.
+2. Definição de variáveis locais, configuração MQTT e LCD Display.
+3. Inicialização IHM Display, IHM Terminal.
+4. Envio e recebimento automático de comandos e respostas via MQTT.
+5. Verificação e tratamento de respostas.  
+6. Atualização de histórico de medições dos sensores.
+7. Publicação de dados dos sensores e NodeMCU para IHM Web.
 
 ###### Passo 1
 O ponto 1 engloba apenas configurações gerais mínimas para o funcionamento do programa. Foram feitas as inclusões de bibliotecas de entrada e saída, manipulação de string, temporização, uma específica para interação com o display LCD. Utilizou-se ainda de duas bibliotecas não-nativas que precisaram ser instalados globalmente no dispositivo: 
-*wiringPi.h* e a de utlização do protocolo MQTT *MQTTClient.h*. Logo abaixo foram definidas as variáveis globais de composição da blbioteca MQTT, os tópicos para SBC trocar mensagem e os pinos para iniciaçização do Display LCD. Foram criadas também uma variável global de tipo MQTTClient, oriunda da blblioteca de mesmo nome, e uma de tipo int chamada *display_lcd*. Em seguida foi definida uma estrutura (Struct) de nome Historic, contendo neste registro 4 campos: um campo char para guardar o nome do sensor a ser tratado, 2 vetores de 10 posições cada um de tipo int. Um dos vetores chamado historic guarda os valores das dez últimas medições do sensor em questão e o outro armazena o tempo em milissegundos da medição respectiva. Foi instanciado um vetor de 10 posições do tipo struct Historic, uma posição para cada sensor de modo que será inicializado posteriormente na função ``` initArrayRegistros(); ```. Por último, nesta primeira seção, estão os protótipos das funções implementadas (a definição, comentários, documentação e corpo das funções está abaixo, depois do fim da função principal).
+*wiringPi.h* e a de utlização do protocolo MQTT _MQTTClient.h_. Logo abaixo foram definidas as variáveis globais de composição da blbioteca MQTT, os tópicos para SBC trocar mensagem e os pinos para iniciaçização do Display LCD. 
+
+Foram criadas também uma variável global de tipo MQTTClient, oriunda da blblioteca de mesmo nome, e uma de tipo int chamada *display_lcd*. Em seguida foi definida uma estrutura (Struct) de nome Historic, contendo neste registro 4 campos: um campo char para guardar o nome do sensor a ser tratado, 2 vetores de 10 posições cada um de tipo int. Um dos vetores chamado historic guarda os valores das dez últimas medições do sensor em questão e o outro armazena o tempo em milissegundos da medição respectiva. 
+
+Foi instanciado um vetor de 10 posições do tipo struct Historic, uma posição para cada sensor de modo que será inicializado posteriormente na função ``` initArrayRegistros(); ```. Por último, nesta primeira seção, estão os protótipos das funções implementadas (a definição, comentários, documentação e corpo das funções está abaixo, depois do fim da função principal).
 
 ![Imagem do struct Historic](./images/struct_historic.png)
 
@@ -88,21 +93,24 @@ No ponto 2, já dentro da função main(), estão definidas as variáveis locais
 Com o MQTT configurado e subscrito no tópico, o próximo passo é inicializar o LCD Display. É realizado o setup de entradas e saídas, através de *wiringPi.h* e *wiringPiDev.h* e em seguida a inicialização dos pinos. O último passo então é inicializar o vetor de histórico *array_registros[10]*, como citado anteriormente.
 
 ###### Passo 3
-Em seguida, no passo 3, a IHM Display é ativada e começa a exibir as mensagens de apresentação do programa tanto no display quanto no terminal (IHM Terminal) por meio de textos impressos na tela. Assim como a solução do problema 2, as solicitação para o NodeMCU são realizadas automaticamente através de um loop for() que publica no tópico *NODEMCU_PUBLISH_* o comando específico da ação da iteração, seguindo o protocolo definido antes.
+Em seguida, no passo 3, a IHM Display é ativada e começa a exibir as mensagens de apresentação do programa tanto no display quanto no terminal (IHM Terminal) por meio de textos impressos na tela. Assim como a solução do problema 2, as solicitação para o NodeMCU são realizadas automaticamente através de um loop for() que publica no tópico *NODEMCU_PUBLISH* o comando específico da ação da iteração, seguindo o protocolo definido antes.
 
+O protocolo de requisição ainda conta com mais uma requisição: Desligamento do LED do NodeMcu (Código 0x07).
 ![Protocolo de comandos de solicitação para NodeMCU](./images/tabela1Reqs.png)
-O protocolo de requisição ainda conta com mais uma requisição: Desligamento do LED do NodeMcu (Código 0x07). 
 
 ###### Passo 4
-Neste ponto, o loop for já está iterando e os comandos são enviados na ordem que são apresentadas na tabela 1. As mensagens são enviadas através da função *publish(MQTTClient, char *, char *)*. Existe, porém, uma diferença realizada para a solicitação de sensores digitais: A mensagem enviada possui 2 dígitos, o primeiro indicando que se trata de um sensor digital e o segundo dígito qual sensor digital está sendo requistado valor. Uma outra sutileza nesse loop é que ao chegar no índice 4, o último visto que a condicional do laço de repetição é o índice seja menor ou igual a 4, ele é atualizado para -1, assim o loop será reiniciado e voltará a posição 0 e reiniciará a publicação de mensagens de solicitação.
+Neste ponto, o loop for já está iterando e os comandos são enviados na ordem que são apresentadas na tabela 1. As mensagens são enviadas através da função _publish(MQTTClient, char *, char *)_. Existe, porém, uma diferença realizada para a solicitação de sensores digitais: A mensagem enviada possui 2 dígitos, o primeiro indicando que se trata de um sensor digital e o segundo dígito qual sensor digital está sendo requistado valor. Uma outra sutileza nesse loop é que ao chegar no índice 4, o último visto que a condicional do laço de repetição é o índice seja menor ou igual a 4, ele é atualizado para -1, assim o loop será reiniciado e voltará a posição 0 e reiniciará a publicação de mensagens de solicitação.
 
 ###### Passo 5
-Enquanto o tópico *NODEMCU_RECEIVE* não recebe mensagens, os comandos continuam a ser enviados regularmente. Caso receba alguma mensagem, a função *on_message(void *, char *, int, MQTTClient_message *)*, que foi passada para a configuração MQTT que a todo instante verifica o recebimento, persiste o payload recebido e repassa-o para outra função que analisa o tópico e a mensagem para tratamento correto dos dados e centralização no SBC. Na função _evaluateRecData(char *, char*)_ os dados são avaliados e ajustados para a correta manipulação. Nas respostas do status do NodeMCU, é apenas escrito na IHM Display e enviado para um outro tópico o resultado formatado de acordo com a resposta. Nestes casos a resposta recebida é constituída de 2 caractéres, que denotam o tipo de status recebido, onde '1F' indica que a NodeMCU está com algum problema e '00 ' indica que a situação está ok. 
-No caso do sensor analógico, a mensagem recebida é composta por 2 caractéres que denotam o tipo de sensor e os caractéres restantes da string são o valor medido nele (Exemplo: 015, ou então, 01789). É criada uma nova variável que recebe uma substring da mensagem total de modo que receba apenas o valor de medição, é convertido em outra variável para tipo inteiro usando a função _atoi(char *)_. O valor recebido é exibido no IHM Display e enviado para ser guardado no histórico. 
+Enquanto o tópico *NODEMCU_RECEIVE* não recebe mensagens, os comandos continuam a ser enviados regularmente. Caso receba alguma mensagem, a função *on_message(void *, char *, int, MQTTClient_message *)*, que foi passada para a configuração MQTT que a todo instante verifica o recebimento, persiste o payload recebido e repassa-o para outra função que analisa o tópico e a mensagem para tratamento correto dos dados e centralização no SBC. Na função _evaluateRecData(char *, char*)_ os dados são avaliados e ajustados para a correta manipulação. Nas respostas do status do NodeMCU, é apenas escrito na IHM Display e enviado para um outro tópico o resultado formatado de acordo com a resposta. Nestes casos a resposta recebida é constituída de 2 caractéres, que denotam o tipo de status recebido, onde '1F' indica que a NodeMCU está com algum problema e '00 ' indica que a situação está ok.
+
+No caso do sensor analógico, a mensagem recebida é composta por 2 caractéres que denotam o tipo de sensor e os caractéres restantes da string são o valor medido nele (Exemplo: 015, ou então, 01789). É criada uma nova variável que recebe uma substring da mensagem total de modo que receba apenas o valor de medição, é convertido em outra variável para tipo inteiro usando a função _atoi(char *)_. O valor recebido é exibido no IHM Display e enviado para ser guardado no histórico.
+
 Semelhantemente ocorre com os sensores digitais, a sutileza presente para eles se trata do formato de mensagem recebido. Neste modelo, a mensagem recebida (Exemplo: 02D3987) é composta pelos 2 caractéres de tipo de sensor (Ex.: 02), os próximos 2 caractéres (D3) são indicativos de qual sensor digital foi medido e o restante da string o valor da medição (987). O tratamento também é parecido, onde duas variáveis são criadas: 1 para o nome do sensor e outra para o valor. Seguindo o mesmo procedimento, o valor é convertido para inteiro e repassado para uma outra função que guarda a medição no histórico.
 
 ###### Passo 6
-Este passo somente é realizado para mensagens recebidas sobre os sensores analógicos e digitais. Neste trecho do programa um índice temporário foi criado junto com uma string que receberá, em notação JSON, os dados escritos do sensor. Esse índice temporário é atribuído o índice pré-incrementado de última modificação do sensor. Deste modo, o campo *last_modified* está sempre atualizado em todos os casos. Caso o campo *last_modified* seja maior ou igual a 9, ele é reiniciado como -1. 
+Este passo somente é realizado para mensagens recebidas sobre os sensores analógicos e digitais. Neste trecho do programa um índice temporário foi criado junto com uma string que receberá, em notação JSON, os dados escritos do sensor. Esse índice temporário é atribuído o índice pré-incrementado de última modificação do sensor. Deste modo, o campo *last_modified* está sempre atualizado em todos os casos. Caso o campo *last_modified* seja maior ou igual a 9, ele é reiniciado como -1.
+
 Assim, o valor e o timestamp recebidos sempre ocuparão a mesma posição em seus vetores adequados (De modo que caso queira acessar historico[3], pode-se, com o índice igual, acessar o timestamp correspondente como timestamp[3]). Outra vantagem de usar o *last_modified* é que os valores dos histórico são constantemente atualizados quando o limite de 10 medições é atingido, assim, quanto menor o índice no vetor a mais tempo ele está presente e deve ser o primeiro a ser atualizado.
 Após o histórico e o timestamp estarem corretamente atualizados, a função *createJson(int)* é chamada e escreve os valores medidos e tempos numa string de modo a estar formatado em JSON.
 
@@ -111,11 +119,142 @@ Continuando o passo 6, com a criação do JSON e dados centralizados na SBC, res
 
 O código do SBC está definido <a href="https://github.com/ian-zaque/pbl_SD_3/blob/main/mqtt.c">aqui</a>. Ele é responsável pelo funcionamento e centralização do programa.
 
-<h2>Funções para o SBC</h2>
+<details>
+<summary>Funções para o SBC</summary>
 Foram criadas algumas funções para modularização e consistência do código. Elas estão listadas e descritas abaixo:
 
-###### publish(MQTTClient client, char* topic, char* payload);
+###### void publish(MQTTClient client, char* topic, char* payload);
+Esta função é responsável pelo envio das mensagens para um tópico passado como parâmetro. Pode ser usada em qualquer lugar do código. Valendo-se da biblioteca ```MQTTClient.h```, foi possível configurar a troca de mensagens e o cliente MQTT.
 
+<details>
+<summary>Parâmetros</summary>
+
+1. MQTTClient client
+    - Cliente de conexão MQTT, definido globalmente antes da função ```main()```.
+2. char * topic
+    - String com nome do tópico onde será escrita a mensagem.
+3. char * payload
+    - String da mensagem a ser transmitida pela conexão MQTT
+</details>
+
+###### int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message);
+Esta função está em execução a todo tempo desde que o MQTT tenha sido configurado, iniciado e o cliente esteja conectado ao broker. Esta execução contínua é feita ao passar a função ```on_message``` como 4º parágrafo da função ```MQTTClient_setCallbacks()```. No corpo da função o payload é persistido numa variável local e em seguida é chamada a função de avaliação de tópico e mensagem recebidos. Os passos seguintes são próprios da biblioteca MQTT e liberam da memória as variáveis de mensagem e tópico dos parâmetros. O retorno da função é 1.
+
+<details>
+<summary>Parâmetros</summary>
+
+1. void *context
+    - Ponteiro nulo para que qualquer tipo de dado possa ser passado como dados de contexto.
+2. char * topicName
+    - String com nome do tópico onde será escrita a mensagem.
+3. int topicLen
+    - Valor inteiro do comprimento do tópico.
+4. MQTTClient_message * message
+    - Ponteiro de tipo MQTTClient_message com informações da mensagem recebida pelo cliente.
+</details>
+
+###### void reconnect(void *context, char *cause);
+Função de tipo de retorno vazio que possibilita a reconexão ao broker em caso de queda/desconfiguração. Ela é acionada quando não é detectado mais comunicação com o broker. O corpo da função é semelhante ao passo 2 da Comunicação SBC - ESP. Em caso de insucesso na reconexão o programa é encerrado e retorna -1, porém, caso seja possível reconectar-se, o cliente é inscrito novamente nos tópicos *NODEMCU_RECEIVE* e *IHM_TIMECHANGE*.
+
+<details>
+<summary>Parâmetros</summary>
+
+1. void *context
+    - Ponteiro nulo para que qualquer tipo de dado possa ser passado como dados de contexto.
+2. char * cause
+    - String com possível motivo da causa da queda de conexão.
+</details>
+
+###### void evaluateRecData(char *topicName, char *payload);
+Função de tipo de retorno vazio que avalia e verifica as mensagens recebidas e seus respectivos tópicos. Como o cliente SBC está subscrito em 2 tópicos, ele irá receber mensagens nos dois em dado momento. 
+
+- Caso receba dados no tópico *IHM_TIMECHANGE*, o dado é convertido em inteiro e multiplicado por 1000. Assim o dado irá ser reutilizado de forma já tratada quando for publicado para o NodeMCU no tópico *NODEMCU_TIMECHANGE*. 
+
+- Caso receba dados no tópico *NODEMCU_RECEIVE*, o dado é esmiussado por caractéres. Se o payload for igual a:
+    - **1F**, a resposta enviada pelo NodeMCU foi de que houve algum erro no momento de análise. É escrito na IHM Display o status do NodeMCU e publicado no tópico *STATUS_NODEMCU*.
+
+    -**00**, o NodeMCU tem status de conexão ok e opera normalmente. De mesmo modo que antes, é escrito na IHM Display o status do NodeMCU e publicado no tópico *STATUS_NODEMCU* que está conectado.
+
+    - **01**, é correto afirmar que foi enviado pelo NodeMCU o valor medido do sensor analógico. A mensagem recebida possui formato "01" concatenado ao valor capturado pelo sensor. O valor é resgatado e splitado da mensagem original através da função ``` substring(char *, int, int);```, convertido em inteiro e repassado para atualizar o histórico do sensor analógico. É escrito também no IHM Display o nome do sensor, A0, e o valor medido.
+
+    - **02**, é correto afirmar que foi enviado pelo NodeMCU o valor medido por algum sensor digital. A mensagem do sensor digital possui formato "02" concatenado ao nome do sensor digital concatenado ao valor capturado pelo sensor (Por exemplo, para o sensor D2 que enviou o valor 1024, a mensagem original é: 02D21024). O nome do sensor e o valor medido são resgatados da mensagem original através da função ``` substring(char *, int, int);``` (chamando-a duas vezes, uma para cada campo e passando índices diferentes de início e fim). O valor do sensor éc onvertido em inteiro e repassado para atualizar o histórico do respectivo sensor digital. É escrito também no IHM Display o nome do sensor e o valor medido.
+
+    - nenhum outro valor, entende-se que houve um erro desconhecido no NodeMCU e é exibido no IHM Display que o status de conexão não está correto.
+
+<details>
+<summary>Parâmetros</summary>
+
+1. void *topicName
+    - String com nome do tópico onde foi escrita a mensagem.
+2. char * payload
+    - String da mensagem que foi transmitida pelo NodeMCU.
+</details>
+
+###### char *substring(char *src, int start, int end);
+Função de tipo de retorno de vetor de caractéres (string) que realiza um corte na string _src_ a partir de dois índices passados como parâmetro. Retorna uma nova string iniciada no índice _start_ do vetor e terminando em _end_. No corpo da função, é visto o tamanho da string a ser criada e reserva-se, com o método _malloc_, espaço de memória para a string de destino. Usando do método _strncpy_ da biblioteca _string.h_, a nova string é copiada para o destino verificando os índices de começo e final. Por fim a string de destino é retornada.
+
+<details>
+<summary>Parâmetros</summary>
+
+1. char *src
+    - String a ser cortada.
+2. int start
+    - Índice de início da nova string.
+3. int end
+    - Índice de final da nova string.
+</details>
+
+###### void updateHistory(char * sensor, int newValue);
+Função  de tipo de retorno vazio criada para atualizar ou criar os valores dos vetores de histórico e timestamp dos sensores. No início do corpo da função, é criado um inteiro _idx_ inicializado em 0 (será usado para reutilizar mais facilmente o campo *last_modified* dos sensores). Em seguida instancia-se a variável *now*, que guardará o valor em milissegundos em que foi recebida a medição para o sensor. Também são criadas outras 2 variáveis locais: *json* que será a string em formato JSON com os vetores de histórico e timestamp; e *sensorTopic* que reterá o nome do tópico respectivo ao sensor que está sendo atualizado (tópico terá o nome *SENSORS_HISTORY/* concatenado ao nome do sensor, ex.: *SENSORS_HISTORY/A0*. Este exemplo, o tópico será escrito quando atualizado os valores medidos e o horário para o sensor analógico A0).
+
+É feita a verificação se o sensor existe nos sensores conhecidos pela SBC e só então o histórico será atualizado. O índice _idx_ recebe o *last_modified* pré-incrementado do sensor e verifica-se qual o valor atual. Caso seja maior ou igual 9, quer dizer que já está ou passou do número possíveis de medições. Em seguida o valor do último sensor modificado é atualizado junto com o timestamp. Por fim o valor é copiado para a variável *json* depois dos campos serem formatados e postos em JSON. Esta formatação é realizada na função ``` createJson(int); ``` que retorna uma string. Caso o sensor não exista/não seja reconhecido apenas alerta-se que houve um sensor desconhecido, sem atualizar nada em histórico.
+
+É importante ressaltar que quando o valor qualquer do vetor de timestamp de um sensor for 0, não houve medição para esta posição ainda. Isto vale para todos os sensores, todas as posições e independe do valor da medição. Em resumo, caso o valor do timestamp da posição *n* for 0, o sensor não foi medido *n* vezes ainda. Caso haja valor na posição *n* no timestamp e valor 0 para histórico, quer dizer que o valor medido do sensor foi 0.
+
+![Imagem do início da função updateHistory e a verificação para o primeiro sensor, o sensor analógico A0](./images/updateHistory.png)
+
+<details>
+<summary>Parâmetros</summary>
+
+1. char *sensor
+    - String do nome do sensor.
+2. int newValue
+    - Novo valor a ser posto no histórico de medições.
+</details>
+
+###### char *createJson(int index);
+Função de tipo de retorno vetor de caractér (string) de criação de string formatada em JSON. Recupera os vetores de histórico e timestamp de um sensor, concatenando e manipulando strings para simular um JSON real criado com Javascript. 
+A string criada possui formato como no exemplo: *"{historico: [0,0,0,0,0,0,0,0,0], timestamp: [0,0,0,0,0,0,0,0,0] }"*. No corpo da função, aloca-se memória para a string com tamanho suficiente para capturar dados muito grandes caso existam. 
+
+Em seguida são postos dois laços de repetição em sequência: o primeiro concatena o campo de histórico, os caracteres que formam o JSON (como chaves, dois pontos e etc) e os 10 valores medidos até o momento. Após isso, os mesmos passos são feitos para o vetor timestamp, de modo que o resultado final seja como o exemplo citado acima. Exibe-se na IHM Terminal a string resultante da manipulação e retorna-se o valor para onde a função foi chamada.
+
+<details>
+<summary>Parâmetros</summary>
+
+1. int index
+    - Índice do sensor em *array_registros*.
+</details>
+
+###### void initArrayRegistros();
+Função de tipo de retorno vazio que inicializa a variável global *array_registros*. Seta os 10 nomes de sensores e em dois laços de repetição inicializa as posições dos vetores de histórico e timestamp em 0 em ambos. Também inicializa o campo *last_modified* em -1, para que quando for pré-incrementado o primeito alvo de modificação seja o índice 0.
+
+###### void initDisplay();
+Função de tipo de retorno vazio que inicializa o LCD Display. Utiliza as bibliotecas *wiringPi.h*, *wiringPiDev.h* e *lcd.h* para manipular os pinos GPIO e deixá-los disponíveis para escrita no display. A variável global *display_lcd* recebe um valor inteiro que simboliza um endereço de memória para ser identificado e junto ao processador gerir processos de Entrada e saída.
+
+###### void write_textLCD(char *linha1, char *linha2);
+Função de tipo de retorno vazio que permite a escrita de strings em duas linhas do LCD Display. Utiliza a variável global *display_lcd* para determinar o Display e ser capaz de escrever nele. O limite de caractéres por linha é 15.
+
+<details>
+<summary>Parâmetros</summary>
+
+1. char *linha1
+    - String a ser escrita na primeira linha do LCD Display.
+2. char *linha2
+    - String a ser escrita na segunda linha do LCD Display.
+</details>
+
+
+</details>
 
 
 <h2>Comunicação SBC - Interface Web</h2>

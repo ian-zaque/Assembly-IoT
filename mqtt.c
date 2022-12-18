@@ -22,6 +22,7 @@
 #define NODEMCU_PUBLISH  "NODEMCU_PUBLISH"
 #define NODEMCU_RECEIVE  "NODEMCU_RECEIVE"
 #define SENSORS_HISTORY  "SENSORS_HISTORY"
+#define STATUS_NODEMCU   "STATUS_NODEMCU"
 #define IHM_TIMECHANGE   "IHM_TIMECHANGE"
 #define NODEMCU_TIMECHANGE "NODEMCU_TIMECHANGE"
 
@@ -199,6 +200,7 @@ void reconnect(void *context, char *cause){
     else { printf("Reconectado\n"); }
 
     MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);
+    MQTTClient_subscribe(client, IHM_TIMECHANGE, 0);
 }
 
 // METHOD TO VERIFY WHAT WAS RECEIVED FROM WHICH TOPIC

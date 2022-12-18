@@ -197,7 +197,8 @@ void EnviaEstadoOutputMQTT(void){
     
     else{
       delay_time_change = atoi(COMANDO);
-      if(delay_time_change > 10000){ delay_time_change = 3000; }
+      if(delay_time_change <= 0){ delay_time_change = 0; }
+      else if(delay_time_change >= 60000){ delay_time_change = 30000; }
     }
 
    COMANDO="0";
