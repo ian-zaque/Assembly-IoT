@@ -161,15 +161,30 @@ Figura 10: Interface HTML
 ![Imagem da conexao HTTP](./images/requisicao_axios.png)
 Figura 11: Modelo da requisição de um dado para o servidor
 
+<h2>ESP8266</h2>
 
+A configuração com a ESP8266 foi realizada via WiFi, nela foi configurado um cliente MQTT para realizar toda a transferência de dados. Seguindo o mesmo modelo do problema anterior, a ESP8266  espera de um código de comando para realizar uma determinada tarefa e retornar a resposta. 
+Neste projeto a ESP esperava um comando de 2 dígitos, que era convertido em string, o primeiro dígito se referia a ação que deveria ser realizada e o segundo dígito a algum sensor caso houvesse. Como resposta a ESP retornava uma mensagem no seguinte formato: 
 
-    
+```
+Mensagem de Resposta:
+    código_resposta+node_sensor+valor_sensor
+```
+Exceto quando é apenas solicitado a situação da ESP, o qual ela responderá apenas com o código de resposta. A figura 12 mostra como é feita essa verificação e a mensagem de resposta que é montada quando o cliente mqtt publica os dados.
+
+![Imagem resposta node](./images/response_node_mqtt.png)
+Figura 12: Publicação da mensagem do ESP8266
+
 <h1>Conclusão e Considerações Finais</h1>
 
-
-
-
-
+O sistema desenvolvido não atende todos os requisitos requeridos no Problema 3, ficando em falta a interação do usuário com a interface local, a visualização do histórico e menu no display LDC. Foi acrescentada a possibilidade de se alterar o intervalo de tempo das medições através da interface web. 
 
 <h1>Referências</h1>
+
+Graça, Pedro Cannale. Sistema de aquisição de dados utilizando o módulo ESP8266 NodeMCU / Pedro Cannale Graça - Guaratinguetá, 2017.
+
+COSTA NETO, J. V. da; BARROS FILHO, E. M. de .; SANTANA, J. R. . Single-Board Computers in Education: A systematic literature review.
+
+Torres. Andrei B.B., Rocha. Atslands R., Souza. José Neuman. Análise de Desempenho de Brokers MQTT em Sistema de Baixo Custo. XXXVI Congresso da Sociedade Brasileira de Computação. - 15º Workshop em Desempenho de Sistemas Computacionais e de Comunicação. 
+
 
