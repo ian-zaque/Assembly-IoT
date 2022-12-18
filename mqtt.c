@@ -22,7 +22,8 @@
 #define NODEMCU_PUBLISH  "NODEMCU_PUBLISH"
 #define NODEMCU_RECEIVE  "NODEMCU_RECEIVE"
 #define SENSORS_HISTORY  "SENSORS_HISTORY"
-#define STATUS_NODEMCU   "STATUS_NODEMCU"
+#define IHM_TIMECHANGE   "IHM_TIMECHANGE"
+#define NODEMCU_TIMECHANGE "NODEMCU_TIMECHANGE"
 
 // Pinos do Display LCD
 #define RS  13
@@ -74,6 +75,7 @@ int main(int argc, char *argv[]){
    }
 
     MQTTClient_subscribe(client, NODEMCU_RECEIVE, 0);            //Subscribing to MQTT topic that NodeMcu publishes
+    MQTTClient_subscribe(client, IHM_TIMECHANGE, 0);
 
     wiringPiSetup();
     initDisplay();              // INIT LCD DISPLAY
@@ -83,9 +85,9 @@ int main(int argc, char *argv[]){
     write_textLCD("  PBL 3 - SD  ", "      IoT      ");
 
     printf("PBL 3 - IoT: A Internet das Coisas. \n \n");
-    printf("As ações seguirão a seguinte ordem: \n");
-    printf("1 - Solicita a situação atual do NodeMCU. \n");
-    printf("2 - Solicita o valor da entrada analógica. \n");
+    printf("As aï¿½ï¿½es seguirï¿½o a seguinte ordem: \n");
+    printf("1 - Solicita a situaï¿½ï¿½o atual do NodeMCU. \n");
+    printf("2 - Solicita o valor da entrada analï¿½gica. \n");
     printf("3 - Solicita o valor de uma das entradas digitais. \n");
     printf("4 - Acendimento do led da NodeMCU. \n");
     printf("5 - Desligamento do led da NodeMCU. \n \n");
@@ -93,7 +95,7 @@ int main(int argc, char *argv[]){
 
     for(int i = 0; i <= 4; i++){           // LOOP TO ENGAGE AUTOMATIC ACTIONS          
             if(i == 0){                   //this checks the NodeMCU status.
-               printf("Ação: Solicita a situação atual do NodeMCU. \n");
+               printf("Aï¿½ï¿½o: Solicita a situaï¿½ï¿½o atual do NodeMCU. \n");
                write_textLCD("Solicitacao:", "Status NodeMCU");
                sleep(5);
 
@@ -102,7 +104,7 @@ int main(int argc, char *argv[]){
 
             if(i == 1){                   ///this requests analog input value
                system("cls || clear");
-               printf("Ação: Solicita o valor da entrada analógica. \n");
+               printf("Aï¿½ï¿½o: Solicita o valor da entrada analï¿½gica. \n");
                write_textLCD("Solicitacao:", "Sen. Analogico");
                sleep(5);
 
@@ -111,7 +113,7 @@ int main(int argc, char *argv[]){
 
             if(i == 2){                   //this requests some digital input value
                system("cls || clear");
-               printf("Ação: Solicita o valor de uma das entradas digitais. \n");
+               printf("Aï¿½ï¿½o: Solicita o valor de uma das entradas digitais. \n");
 
                //LOOP TO COMMUTE DIGITAL SENSORS REQUESTS
                for (int idxSensor = 50; idxSensor < 59; idxSensor++){
@@ -133,7 +135,7 @@ int main(int argc, char *argv[]){
 
             if(i == 3){                   //this turn on the led
                system("cls || clear");
-               printf("Ação: Acendimento do LED da NodeMCU. \n");
+               printf("Aï¿½ï¿½o: Acendimento do LED da NodeMCU. \n");
                write_textLCD("Solicitacao:", "Ligar LED");
                sleep(5);
 
@@ -144,7 +146,7 @@ int main(int argc, char *argv[]){
                i = -1;             // RESET THE LOOP
 
                system("cls || clear");
-               printf("Ação: Desligamento do LED do NodeMCU. \n");
+               printf("Aï¿½ï¿½o: Desligamento do LED do NodeMCU. \n");
                write_textLCD("Solicitacao:", "Desligar LED");
                sleep(5);
 
@@ -237,6 +239,11 @@ void evaluateRecData(char * topicName, char *payload){
         }
 
         else{ write_textLCD("Resposta:", "NodeMCU not ok"); }
+    }
+
+    else if(strcmp(topicName, "IHM_TIMECHANGE") == 0){
+         int value = (atoi(analogInputValue) * 1000);            // CONVERT STRING TO INT
+         publish(client, NODEMCU_TIMECHANGE, value);
     }
 
     return;

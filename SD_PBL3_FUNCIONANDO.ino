@@ -14,6 +14,7 @@
 #define TOPICO_PUBLISH "NODEMCU_RECEIVE"
 #define ID_MQTT "SDPBL3"
 #define TOPICO_SUBSCRIBE2 "nodemcu"
+#define IHM_TIMECHANGE "IHM_TIMECHANGE"
 #define BUFFER_SIZE 64
 //response command
 String operating_normally   = "00";
@@ -22,6 +23,7 @@ String analog_entry_measure = "01";
 String digital_input_status = "02";
 
 String COMANDO;
+int delay_time_change = 1000;
 
 //String comand = "";
 const char* ssid = STASSID;
@@ -110,7 +112,7 @@ void initMqtt(){
     Serial.println("Node conectada");
     client.subscribe(TOPICO_SUBSCRIBE);
     client.subscribe(TOPICO_PUBLISH);
-
+    client.subscribe(IHM_TIMECHANGE);
 
   }else{
     
@@ -193,6 +195,11 @@ void EnviaEstadoOutputMQTT(void){
       client.publish(TOPICO_PUBLISH,operating_normally);
     }
     
+    else{
+      delay_time_change = atoi(COMANDO);
+      if(delay_time_change > 10000){ delay_time_change = 3000; }
+    }
+
    COMANDO="0";
 }
 
@@ -286,4 +293,5 @@ void loop() {
   ArduinoOTA.handle();
   EnviaEstadoOutputMQTT();  // Envia um dado para quem solicita
   client.loop();
+  delay(delay_time_change);
 }
