@@ -175,6 +175,8 @@ Esta função é responsável pelo envio das mensagens para um tópico passado c
     - String da mensagem a ser transmitida pela conexão MQTT
 </details>
 
+<br>
+
 ###### int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 Esta função está em execução a todo tempo desde que o MQTT tenha sido configurado, iniciado e o cliente esteja conectado ao broker. Esta execução contínua é feita ao passar a função ```on_message``` como 4º parágrafo da função ```MQTTClient_setCallbacks()```. No corpo da função o payload é persistido numa variável local e em seguida é chamada a função de avaliação de tópico e mensagem recebidos. Os passos seguintes são próprios da biblioteca MQTT e liberam da memória as variáveis de mensagem e tópico dos parâmetros. O retorno da função é 1.
 
@@ -191,6 +193,8 @@ Esta função está em execução a todo tempo desde que o MQTT tenha sido confi
     - Ponteiro de tipo MQTTClient_message com informações da mensagem recebida pelo cliente.
 </details>
 
+<br>
+
 ###### void reconnect(void *context, char *cause);
 Função de tipo de retorno vazio que possibilita a reconexão ao broker em caso de queda/desconfiguração. Ela é acionada quando não é detectado mais comunicação com o broker. O corpo da função é semelhante ao passo 2 da Comunicação SBC - ESP. Em caso de insucesso na reconexão o programa é encerrado e retorna -1, porém, caso seja possível reconectar-se, o cliente é inscrito novamente nos tópicos *NODEMCU_RECEIVE* e *IHM_TIMECHANGE*.
 
@@ -202,6 +206,8 @@ Função de tipo de retorno vazio que possibilita a reconexão ao broker em caso
 2. char * cause
     - String com possível motivo da causa da queda de conexão.
 </details>
+
+<br>
 
 ###### void evaluateRecData(char *topicName, char *payload);
 Função de tipo de retorno vazio que avalia e verifica as mensagens recebidas e seus respectivos tópicos. Como o cliente SBC está subscrito em 2 tópicos, ele irá receber mensagens nos dois em dado momento. 
@@ -228,6 +234,8 @@ Função de tipo de retorno vazio que avalia e verifica as mensagens recebidas e
     - String da mensagem que foi transmitida pelo NodeMCU.
 </details>
 
+<br>
+
 ###### char *substring(char *src, int start, int end);
 Função de tipo de retorno de vetor de caractéres (string) que realiza um corte na string _src_ a partir de dois índices passados como parâmetro. Retorna uma nova string iniciada no índice _start_ do vetor e terminando em _end_. No corpo da função, é visto o tamanho da string a ser criada e reserva-se, com o método _malloc_, espaço de memória para a string de destino. Usando do método _strncpy_ da biblioteca _string.h_, a nova string é copiada para o destino verificando os índices de começo e final. Por fim a string de destino é retornada.
 
@@ -241,6 +249,8 @@ Função de tipo de retorno de vetor de caractéres (string) que realiza um cort
 3. int end
     - Índice de final da nova string.
 </details>
+
+<br>
 
 ###### void updateHistory(char * sensor, int newValue);
 Função  de tipo de retorno vazio criada para atualizar ou criar os valores dos vetores de histórico e timestamp dos sensores. No início do corpo da função, é criado um inteiro _idx_ inicializado em 0 (será usado para reutilizar mais facilmente o campo *last_modified* dos sensores). Em seguida instancia-se a variável *now*, que guardará o valor em milissegundos em que foi recebida a medição para o sensor. Também são criadas outras 2 variáveis locais: *json* que será a string em formato JSON com os vetores de histórico e timestamp; e *sensorTopic* que reterá o nome do tópico respectivo ao sensor que está sendo atualizado (tópico terá o nome *SENSORS_HISTORY/* concatenado ao nome do sensor, ex.: *SENSORS_HISTORY/A0*. Este exemplo, o tópico será escrito quando atualizado os valores medidos e o horário para o sensor analógico A0).
@@ -260,6 +270,8 @@ Função  de tipo de retorno vazio criada para atualizar ou criar os valores dos
     - Novo valor a ser posto no histórico de medições.
 </details>
 
+<br>
+
 ###### char *createJson(int index);
 Função de tipo de retorno vetor de caractér (string) de criação de string formatada em JSON. Recupera os vetores de histórico e timestamp de um sensor, concatenando e manipulando strings para simular um JSON real criado com Javascript. 
 A string criada possui formato como no exemplo: *"{historico: [0,0,0,0,0,0,0,0,0], timestamp: [0,0,0,0,0,0,0,0,0] }"*. No corpo da função, aloca-se memória para a string com tamanho suficiente para capturar dados muito grandes caso existam. 
@@ -273,11 +285,17 @@ Em seguida são postos dois laços de repetição em sequência: o primeiro conc
     - Índice do sensor em *array_registros*.
 </details>
 
+<br>
+
 ###### void initArrayRegistros();
 Função de tipo de retorno vazio que inicializa a variável global *array_registros*. Seta os 10 nomes de sensores e em dois laços de repetição inicializa as posições dos vetores de histórico e timestamp em 0 em ambos. Também inicializa o campo *last_modified* em -1, para que quando for pré-incrementado o primeito alvo de modificação seja o índice 0.
 
+<br>
+
 ###### void initDisplay();
 Função de tipo de retorno vazio que inicializa o LCD Display. Utiliza as bibliotecas *wiringPi.h*, *wiringPiDev.h* e *lcd.h* para manipular os pinos GPIO e deixá-los disponíveis para escrita no display. A variável global *display_lcd* recebe um valor inteiro que simboliza um endereço de memória para ser identificado e junto ao processador gerir processos de Entrada e saída.
+
+<br>
 
 ###### void write_textLCD(char *linha1, char *linha2);
 Função de tipo de retorno vazio que permite a escrita de strings em duas linhas do LCD Display. Utiliza a variável global *display_lcd* para determinar o Display e ser capaz de escrever nele. O limite de caractéres por linha é 15.
@@ -291,6 +309,7 @@ Função de tipo de retorno vazio que permite a escrita de strings em duas linha
     - String a ser escrita na segunda linha do LCD Display.
 </details>
 
+<br>
 
 </details>
 
