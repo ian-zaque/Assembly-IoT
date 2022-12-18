@@ -6,6 +6,24 @@
     <li><a href="https://github.com/ian-zaque">@ian-zaque</a></li>
 </div>
 
+<h1>Executar o projeto</h1>
+
+```
+Clone o repositório, execute: 
+
+git clone 
+
+em /api execute
+npm install
+node server.js
+
+Para executar a interface suba um servidor local html. 
+em /interface_html execute o arquivo index.html
+
+obs: Recomenda-se utilzar a IDE VsCode e sua extensão LIVE-SERVER
+```
+
+
 <h1>Indice</h1>
 <ol>
     <li>Contextualização do Problema</li>
@@ -258,14 +276,72 @@ Função de tipo de retorno vazio que permite a escrita de strings em duas linha
 
 
 <h2>Comunicação SBC - Interface Web</h2>
+<h4>API</h4>
+Como decisão de projeto foi desenvolvido uma api, na linguagem Javascript, .para se comunicar com a SBC e a interface web para visualização  dos dados graficamente. E está estruturado nas seguintes ordens: 1- Comunicação Cliente MQTT,  2- Comunicação servidor HTTP e 3- Interface web HTML
+<h6>Passo 1</h6>
+A API trabalha com dois protocolos de comunicação  MQTT e o HTTP. Internamente é executado um cliente MQTT (figura 5) para comunicação direta com a SBC, este cliente recebe todos os dados formatados que a SBC tratou, esses dados são referentes aos valores das últimas dez medições dos sensores. Os dados chegam em formato de string JSON o qual é transformado em um objeto JSON(figura 6) e armazenado em um arquivo .JSON (fiigura 7) que temos como base de dados. Para que isso fosse possível a API teve que  se cadastrar em cada tópico relacionado a uma medição do sistema (figura 8).
 
+![Imagem da Configuracao MQTT](./images/configuracao_mqtt.png)
+Figura 5: Configuração Conexão MQTT
+
+![Imagem do recebimento de dados](./images/recebimento_msg.png)
+Figura 6: Conversão da Mensagem em objeto JSON
+
+![Imagem do armazenamento dos dados](./images/escrita_dados_json.png)
+Figura 7: Armazenamento dos dados recebidos
+
+![Imagem dos inscrição dos tópicos](./images/definicao_inscricao_topicos.png)
+Figura 8: Inscrição nos tópicos
+
+
+<h6>Passo 2</h2>
+
+API executa um servidor HTTP, na porta 3000, o qual fica esperando a comunicação da interface web via requisições HTTP. 
+O servidor dispõe de três rotas de acesso “/comando, /situacaoNode, /sensores/:sensor”:
+<ul>
+    <li>“/comando”: Rota responsável por enviar um comando de ação via protocolo MQTT que será executado na ESP8266. Para esse caso, é enviado a informação de alteração to tempo de medição dos sensores do ESP8266</li>
+    <li>“/situacaoNode”: essa rota retorna apenas qual o status da ESP8266 se está conectado ou desconectado. Se for conectado sabemos que o dispositivo está funcionando corretamente, caso contrário o dispositivo não está funcionando corretamente. </li>
+        <li>“/sensores/:sensor”:  Essa rota recebe como parâmetro o nome do sensor que queremos visualizar os dados e como resposta é retornado um objeto JSON que remete aos dados das medições mais atualizadas dos sensores naquele momento. Para a execução dessa tarefa é feita a leitura do arquivo JSON(figura 9) no momento que é identificado de qual sensor queremos visualizar os dados. 
+ </li>    
+</ul>
+
+![Imagem da leitura do arquivo JSON](./images/rotas_http.png)
+Figura 9: Leitura da base de Dados (arquivo JSON)
+    
+   <h6>Passo 3  - Interface Web</h6>
+   É uma simples página HTML (figura 10) que permite o usuário interagir com o sistema. Ela se comunica diretamente com a API via protocolo HTTP(figura 11). A interface dispõe de nove botões que fazem referência aos sensores disponíveis na ESP8266, através desses botões o usuário pode visualizar um gráfico de medições referente aos dados medidos pelo sensor escolhido. O usuário pode alterar o tempo em que a ESP8266 realiza as medições dos dados dos sensores. Nos campos de input, o primeiro é possível solicitar a alteração do tempo de medição dos sensores da ESP8266 e o segundo altera o tempo em que é atualizada os gráficos da interface web. (figura 10)
+A Interface Web se comunica apenas com a API do sistema, não conhecendo os outros elementos que compõem o  sistema como a SBC, a ESP8266, o Broker. 
+
+![Imagem da Inteface](./images/interface_web.png)
+Figura 10: Interface HTML
+
+![Imagem da conexao HTTP](./images/requisicao_axios.png)
+Figura 11: Modelo da requisição de um dado para o servidor
+
+<h2>ESP8266</h2>
+
+A configuração com a ESP8266 foi realizada via WiFi, nela foi configurado um cliente MQTT para realizar toda a transferência de dados. Seguindo o mesmo modelo do problema anterior, a ESP8266  espera de um código de comando para realizar uma determinada tarefa e retornar a resposta. 
+Neste projeto a ESP esperava um comando de 2 dígitos, que era convertido em string, o primeiro dígito se referia a ação que deveria ser realizada e o segundo dígito a algum sensor caso houvesse. Como resposta a ESP retornava uma mensagem no seguinte formato: 
+
+```
+Mensagem de Resposta:
+    código_resposta+node_sensor+valor_sensor
+```
+Exceto quando é apenas solicitado a situação da ESP, o qual ela responderá apenas com o código de resposta. A figura 12 mostra como é feita essa verificação e a mensagem de resposta que é montada quando o cliente mqtt publica os dados.
+
+![Imagem resposta node](./images/response_node_mqtt.png)
+Figura 12: Publicação da mensagem do ESP8266
 
 <h1>Conclusão e Considerações Finais</h1>
 
-
-
-
-
+O sistema desenvolvido não atende todos os requisitos requeridos no Problema 3, ficando em falta a interação do usuário com a interface local, a visualização do histórico e menu no display LDC. Foi acrescentada a possibilidade de se alterar o intervalo de tempo das medições através da interface web. 
 
 <h1>Referências</h1>
+
+Graça, Pedro Cannale. Sistema de aquisição de dados utilizando o módulo ESP8266 NodeMCU / Pedro Cannale Graça - Guaratinguetá, 2017.
+
+COSTA NETO, J. V. da; BARROS FILHO, E. M. de .; SANTANA, J. R. . Single-Board Computers in Education: A systematic literature review.
+
+Torres. Andrei B.B., Rocha. Atslands R., Souza. José Neuman. Análise de Desempenho de Brokers MQTT em Sistema de Baixo Custo. XXXVI Congresso da Sociedade Brasileira de Computação. - 15º Workshop em Desempenho de Sistemas Computacionais e de Comunicação. 
+
 

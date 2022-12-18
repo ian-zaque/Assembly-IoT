@@ -46,7 +46,7 @@ const topic_historyD6 = "SENSORS_HISTORY/D6";
 const topic_historyD7 = "SENSORS_HISTORY/D7";
 const topic_historyD8 = "SENSORS_HISTORY/D8";
 const situacao_mcu = "STATUS_NODEMCU";
-
+const topic_publish_ihm = "IHM_TIMECHANGE";
 const topic_subscribe = "nodeEnvia";
 
 let situacao_node;
@@ -87,7 +87,7 @@ client.on("message", async (topico, msg) => {
 
 const EnviaMsg = (message) => {
   console.log(typeof message);
-  client.publish(topic_publish, message);
+  client.publish(topic_publish_ihm, message);
 };
 
 // Ler Base de dados (arquivo Json)
