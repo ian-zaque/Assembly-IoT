@@ -6,6 +6,24 @@
     <li><a href="https://github.com/ian-zaque">@ian-zaque</a></li>
 </div>
 
+<h1>Executar o projeto</h1>
+
+```
+Clone o repositório, execute: 
+
+git clone 
+
+em /api execute
+npm install
+node server.js
+
+Para executar a interface suba um servidor local html. 
+em /interface_html execute o arquivo index.html
+
+obs: Recomenda-se utilzar a IDE VsCode e sua extensão LIVE-SERVER
+```
+
+
 <h1>Indice</h1>
 <ol>
     <li>Contextualização do Problema</li>
