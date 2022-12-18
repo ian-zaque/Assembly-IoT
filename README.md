@@ -67,7 +67,7 @@ A internet das coisas (IoT) trata-se de uma rede de objetos físicos do dia-a-di
 
 Os programas a serem implementados devem ser capazes de ler até 8 sensores digitais, um sensor analógico, verificando estes através do módulo Wifi ESP8266 NodeMCU e interagir com um LED. O sistema deve ser comandado, de forma automatizada, por um Single Board Computer (SBC) que neste contexto será a Orange Pi PC Plus.
 
-A comunicação será iniciada pelo SBC que envia via MQTT (Message Queue Telemetry Transport) os dados de solicitação, por meio de tópicos específicos, para o NodeMCU que responde adequadamente seguindo o protocolo de comandos. Além de monitorar sensores e manipular o LED imbutido do NodeMCU, o sistema deve exibir no display anexo as informações respectivas a requisição realizada, a resposta obtida. Também deve ser incluso na solução do problema uma interface homem-máquina (IHM) que deve exibir os dados dos sensores em formato de gráficos com histórico das 10 últimas medições. Nesta mesma IHM o status da NodeMCU deve constar indicando sua conexão. É possível ler o problema completo <a href="./Problema 3 - IoT A Internet das Coisas.pdf">neste link</a>.
+A comunicação será iniciada pelo SBC que envia via MQTT (Message Queue Telemetry Transport) os dados de solicitação, por meio de tópicos específicos, para o NodeMCU que responde adequadamente seguindo o protocolo de comandos. Além de monitorar sensores e manipular o LED imbutido do NodeMCU, o sistema deve exibir no display anexo as informações respectivas a requisição realizada, a resposta obtida. Também deve ser incluso na solução do problema uma interface homem-máquina (IHM) que deve exibir os dados dos sensores em formato de gráficos com histórico das 10 últimas medições. Nesta mesma IHM o status da NodeMCU deve constar indicando sua conexão. É possível ler o problema completo <a href="./Problema 3 - IoT A Internet das Coisas.pdf">neste link</a> e também acessar um breve resumo da solução desenvolvida no <a href="./Problema 3 - IoT A Internet das Coisas.pdf">slide</a> 
 
 <h1>Fundamentação Teórica</h1>
 <h2>Protocolos de Comunicação</h2>
@@ -140,7 +140,7 @@ O protocolo de requisição ainda conta com mais uma requisição: Desligamento 
 Neste ponto, o loop for já está iterando e os comandos são enviados na ordem que são apresentadas na tabela 1. As mensagens são enviadas através da função _publish(MQTTClient, char *, char *)_. Existe, porém, uma diferença realizada para a solicitação de sensores digitais: A mensagem enviada possui 2 dígitos, o primeiro indicando que se trata de um sensor digital e o segundo dígito qual sensor digital está sendo requistado valor. Uma outra sutileza nesse loop é que ao chegar no índice 4, o último visto que a condicional do laço de repetição é o índice seja menor ou igual a 4, ele é atualizado para -1, assim o loop será reiniciado e voltará a posição 0 e reiniciará a publicação de mensagens de solicitação.
 
 ###### Passo 5
-Enquanto o tópico *NODEMCU_RECEIVE* não recebe mensagens, os comandos continuam a ser enviados regularmente. Caso receba alguma mensagem, a função *on_message(void *, char *, int, MQTTClient_message *)*, que foi passada para a configuração MQTT que a todo instante verifica o recebimento, persiste o payload recebido e repassa-o para outra função que analisa o tópico e a mensagem para tratamento correto dos dados e centralização no SBC. Na função _evaluateRecData(char *, char*)_ os dados são avaliados e ajustados para a correta manipulação. Nas respostas do status do NodeMCU, é apenas escrito na IHM Display e enviado para um outro tópico o resultado formatado de acordo com a resposta. Nestes casos a resposta recebida é constituída de 2 caractéres, que denotam o tipo de status recebido, onde '1F' indica que a NodeMCU está com algum problema e '00 ' indica que a situação está ok.
+Enquanto o tópico *NODEMCU_RECEIVE* não recebe mensagens, os comandos continuam a ser enviados regularmente. Caso receba alguma mensagem, a função *on_message(void *, char *, int, MQTTClient_message *)*, que foi passada para a configuração MQTT que a todo instante verifica o recebimento, persiste o payload recebido e repassa-o para outra função que analisa o tópico e a mensagem para tratamento correto dos dados e centralização no SBC. Na função _evaluateRecData(char *, char*)_ os dados são avaliados e ajustados para a correta manipulação. Nas respostas do status do NodeMCU, é apenas escrito na IHM Display e enviado para um outro tópico o resultado formatado de acordo com a resposta. Nestes casos a resposta recebida é constituída de 2 caractéres, que denotam o tipo de status recebido, onde **1F** indica que a NodeMCU está com algum problema e **00** indica que a situação está ok.
 
 No caso do sensor analógico, a mensagem recebida é composta por 2 caractéres que denotam o tipo de sensor e os caractéres restantes da string são o valor medido nele (Exemplo: 015, ou então, 01789). É criada uma nova variável que recebe uma substring da mensagem total de modo que receba apenas o valor de medição, é convertido em outra variável para tipo inteiro usando a função _atoi(char *)_. O valor recebido é exibido no IHM Display e enviado para ser guardado no histórico.
 
@@ -158,8 +158,8 @@ Continuando o passo 6, com a criação do JSON e dados centralizados na SBC, res
 O código do SBC está definido <a href="https://github.com/ian-zaque/pbl_SD_3/blob/main/mqtt.c">aqui</a>. Ele é responsável pelo funcionamento e centralização do programa.
 
 <details>
-<summary>Funções para o SBC</summary>
-Foram criadas algumas funções para modularização e consistência do código. Elas estão listadas e descritas abaixo:
+<summary>Descrição das funções do SBC</summary>
+Foram criadas algumas funções para modularização e consistência do código. Elas estão listadas e descritas individualmente abaixo:
 
 ###### void publish(MQTTClient client, char* topic, char* payload);
 Esta função é responsável pelo envio das mensagens para um tópico passado como parâmetro. Pode ser usada em qualquer lugar do código. Valendo-se da biblioteca ```MQTTClient.h```, foi possível configurar a troca de mensagens e o cliente MQTT.
@@ -178,7 +178,7 @@ Esta função é responsável pelo envio das mensagens para um tópico passado c
 <hr>
 
 ###### int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message);
-Esta função está em execução a todo tempo desde que o MQTT tenha sido configurado, iniciado e o cliente esteja conectado ao broker. Esta execução contínua é feita ao passar a função ```on_message``` como 4º parágrafo da função ```MQTTClient_setCallbacks()```. No corpo da função o payload é persistido numa variável local e em seguida é chamada a função de avaliação de tópico e mensagem recebidos. Os passos seguintes são próprios da biblioteca MQTT e liberam da memória as variáveis de mensagem e tópico dos parâmetros. O retorno da função é 1.
+Esta função está em execução a todo tempo desde que o MQTT tenha sido configurado, iniciado e o cliente esteja conectado ao broker. Esta execução contínua é feita ao passar a função ```on_message``` como 4º parágrafo da função ```MQTTClient_setCallbacks();```. No corpo da função o payload é persistido numa variável local e em seguida é chamada a função de avaliação de tópico e mensagem recebidos. Os passos seguintes são próprios da biblioteca MQTT e liberam da memória as variáveis de mensagem e tópico dos parâmetros. O retorno da função é 1.
 
 <details>
 <summary>Parâmetros</summary>
@@ -310,7 +310,6 @@ Função de tipo de retorno vazio que permite a escrita de strings em duas linha
 </details>
 
 <hr>
-
 </details>
 
 
@@ -322,20 +321,23 @@ Como decisão de projeto foi desenvolvido uma API, na linguagem Javascript, para
 2. Comunicação servidor HTTP 
 3. Interface web HTML
 
-
 <h6>Passo 1</h6>
 A API trabalha com dois protocolos de comunicação MQTT e o HTTP. Internamente é executado um cliente MQTT (figura 5) para comunicação direta com a SBC, este cliente recebe todos os dados formatados que a SBC tratou, esses dados são referentes aos valores das últimas dez medições dos sensores. Os dados chegam em formato de string JSON o qual é transformado em um objeto JSON(figura 6) e armazenado em um arquivo .JSON (fiigura 7) que tem-se como base de dados. Para que isso fosse possível a API teve que se cadastrar em cada tópico relacionado a uma medição do sistema (figura 8).
 
 ![Imagem da Configuracao MQTT](./images/configuracao_mqtt.png)
+
 Figura 5: Configuração Conexão MQTT
 
 ![Imagem do recebimento de dados](./images/recebimento_msg.png)
+
 Figura 6: Conversão da Mensagem em objeto JSON
 
 ![Imagem do armazenamento dos dados](./images/escrita_dados_json.png)
+
 Figura 7: Armazenamento dos dados recebidos
 
 ![Imagem dos inscrição dos tópicos](./images/definicao_inscricao_topicos.png)
+
 Figura 8: Inscrição nos tópicos
 
 
@@ -351,6 +353,7 @@ O servidor dispõe de três rotas de acesso: “/comando, /situacaoNode, /sensor
 - */sensores/:sensor*: Essa rota recebe como parâmetro o nome do sensor que deseja-se visualizar os dados e como resposta é retornado um objeto JSON que remete aos dados das medições mais atualizadas dos sensores naquele momento. Para a execução dessa tarefa, é feita a leitura do arquivo JSON (figura 9) no momento que é identificado de qual sensor queremos visualizar os dados.
 
 ![Imagem da leitura do arquivo JSON](./images/rotas_http.png)
+
 Figura 9: Leitura da base de Dados (arquivo JSON)
     
 <h6>Passo 3  - Interface Web</h6>
@@ -360,6 +363,7 @@ Figura 9: Leitura da base de Dados (arquivo JSON)
 Figura 10: Interface HTML
 
 ![Imagem da conexao HTTP](./images/requisicao_axios.png)
+
 Figura 11: Modelo da requisição de um dado para o servidor
 
 <h2>ESP8266</h2>
@@ -374,6 +378,7 @@ Mensagem de Resposta:
 Exceto quando é apenas solicitado a situação da ESP, o qual ela responderá apenas com o código de resposta. A figura 12 mostra como é feita essa verificação e a mensagem de resposta que é montada quando o cliente MQTT publica os dados.
 
 ![Imagem resposta node](./images/response_node_mqtt.png)
+
 Figura 12: Publicação da mensagem do ESP8266
 
 <h1>Conclusão e Considerações Finais</h1>
@@ -406,7 +411,7 @@ Torres. Andrei B.B., Rocha. Atslands R., Souza. José Neuman. Análise de Desemp
 
 [EclipseMQTT](https://www.eclipse.org/paho/index.php?page=clients/c/index.php)
 
-[WiringPi] (http://wiringpi.com/)
+[WiringPi](http://wiringpi.com/)
 
 [String.h](https://petbcc.ufscar.br/string/)
 
