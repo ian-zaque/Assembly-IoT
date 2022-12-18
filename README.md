@@ -217,7 +217,7 @@ Função de tipo de retorno vazio que avalia e verifica as mensagens recebidas e
 - Caso receba dados no tópico *NODEMCU_RECEIVE*, o dado é esmiussado por caractéres. Se o payload for igual a:
     - **1F**, a resposta enviada pelo NodeMCU foi de que houve algum erro no momento de análise. É escrito na IHM Display o status do NodeMCU e publicado no tópico *STATUS_NODEMCU*.
 
-    -**00**, o NodeMCU tem status de conexão ok e opera normalmente. De mesmo modo que antes, é escrito na IHM Display o status do NodeMCU e publicado no tópico *STATUS_NODEMCU* que está conectado.
+    - **00**, o NodeMCU tem status de conexão ok e opera normalmente. De mesmo modo que antes, é escrito na IHM Display o status do NodeMCU e publicado no tópico *STATUS_NODEMCU* que está conectado.
 
     - **01**, é correto afirmar que foi enviado pelo NodeMCU o valor medido do sensor analógico. A mensagem recebida possui formato "01" concatenado ao valor capturado pelo sensor. O valor é resgatado e splitado da mensagem original através da função ``` substring(char *, int, int);```, convertido em inteiro e repassado para atualizar o histórico do sensor analógico. É escrito também no IHM Display o nome do sensor, A0, e o valor medido.
 
@@ -316,9 +316,15 @@ Função de tipo de retorno vazio que permite a escrita de strings em duas linha
 
 <h2>Comunicação SBC - Interface Web</h2>
 <h4>API</h4>
-Como decisão de projeto foi desenvolvido uma api, na linguagem Javascript, .para se comunicar com a SBC e a interface web para visualização  dos dados graficamente. E está estruturado nas seguintes ordens: 1- Comunicação Cliente MQTT,  2- Comunicação servidor HTTP e 3- Interface web HTML
+Como decisão de projeto foi desenvolvido uma API, na linguagem Javascript, para se comunicar com a SBC e a interface web para visualização dos dados graficamente. Está estruturado nas seguintes ordens:
+
+1. Comunicação Cliente MQTT
+2. Comunicação servidor HTTP 
+3. Interface web HTML
+
+
 <h6>Passo 1</h6>
-A API trabalha com dois protocolos de comunicação  MQTT e o HTTP. Internamente é executado um cliente MQTT (figura 5) para comunicação direta com a SBC, este cliente recebe todos os dados formatados que a SBC tratou, esses dados são referentes aos valores das últimas dez medições dos sensores. Os dados chegam em formato de string JSON o qual é transformado em um objeto JSON(figura 6) e armazenado em um arquivo .JSON (fiigura 7) que temos como base de dados. Para que isso fosse possível a API teve que  se cadastrar em cada tópico relacionado a uma medição do sistema (figura 8).
+A API trabalha com dois protocolos de comunicação MQTT e o HTTP. Internamente é executado um cliente MQTT (figura 5) para comunicação direta com a SBC, este cliente recebe todos os dados formatados que a SBC tratou, esses dados são referentes aos valores das últimas dez medições dos sensores. Os dados chegam em formato de string JSON o qual é transformado em um objeto JSON(figura 6) e armazenado em um arquivo .JSON (fiigura 7) que tem-se como base de dados. Para que isso fosse possível a API teve que se cadastrar em cada tópico relacionado a uma medição do sistema (figura 8).
 
 ![Imagem da Configuracao MQTT](./images/configuracao_mqtt.png)
 Figura 5: Configuração Conexão MQTT
@@ -335,21 +341,20 @@ Figura 8: Inscrição nos tópicos
 
 <h6>Passo 2</h2>
 
-API executa um servidor HTTP, na porta 3000, o qual fica esperando a comunicação da interface web via requisições HTTP. 
-O servidor dispõe de três rotas de acesso “/comando, /situacaoNode, /sensores/:sensor”:
-<ul>
-    <li>“/comando”: Rota responsável por enviar um comando de ação via protocolo MQTT que será executado na ESP8266. Para esse caso, é enviado a informação de alteração to tempo de medição dos sensores do ESP8266</li>
-    <li>“/situacaoNode”: essa rota retorna apenas qual o status da ESP8266 se está conectado ou desconectado. Se for conectado sabemos que o dispositivo está funcionando corretamente, caso contrário o dispositivo não está funcionando corretamente. </li>
-        <li>“/sensores/:sensor”:  Essa rota recebe como parâmetro o nome do sensor que queremos visualizar os dados e como resposta é retornado um objeto JSON que remete aos dados das medições mais atualizadas dos sensores naquele momento. Para a execução dessa tarefa é feita a leitura do arquivo JSON(figura 9) no momento que é identificado de qual sensor queremos visualizar os dados. 
- </li>    
-</ul>
+API executa um servidor HTTP, na porta 3000, o qual espera a comunicação da interface Web via requisições HTTP. 
+O servidor dispõe de três rotas de acesso: “/comando, /situacaoNode, /sensores/:sensor”:
+
+- */comando*: Rota responsável por enviar um comando de ação via protocolo MQTT que será executado na ESP8266. Para esse caso, é enviado a informação de alteração to tempo de medição dos sensores do ESP8266.
+
+- */situacaoNode*: Essa rota retorna apenas qual o status da ESP8266 se está conectado ou desconectado. Se for conectado, sabe-se que o dispositivo está funcionando corretamente, caso contrário o dispositivo não está funcionando corretamente.
+
+- */sensores/:sensor*: Essa rota recebe como parâmetro o nome do sensor que deseja-se visualizar os dados e como resposta é retornado um objeto JSON que remete aos dados das medições mais atualizadas dos sensores naquele momento. Para a execução dessa tarefa, é feita a leitura do arquivo JSON (figura 9) no momento que é identificado de qual sensor queremos visualizar os dados.
 
 ![Imagem da leitura do arquivo JSON](./images/rotas_http.png)
 Figura 9: Leitura da base de Dados (arquivo JSON)
     
-   <h6>Passo 3  - Interface Web</h6>
-   É uma simples página HTML (figura 10) que permite o usuário interagir com o sistema. Ela se comunica diretamente com a API via protocolo HTTP(figura 11). A interface dispõe de nove botões que fazem referência aos sensores disponíveis na ESP8266, através desses botões o usuário pode visualizar um gráfico de medições referente aos dados medidos pelo sensor escolhido. O usuário pode alterar o tempo em que a ESP8266 realiza as medições dos dados dos sensores. Nos campos de input, o primeiro é possível solicitar a alteração do tempo de medição dos sensores da ESP8266 e o segundo altera o tempo em que é atualizada os gráficos da interface web. (figura 10)
-A Interface Web se comunica apenas com a API do sistema, não conhecendo os outros elementos que compõem o  sistema como a SBC, a ESP8266, o Broker. 
+<h6>Passo 3  - Interface Web</h6>
+É uma simples página HTML (figura 10) que permite o usuário interagir com o sistema. Ela se comunica diretamente com a API via protocolo HTTP (figura 11). A interface dispõe de nove botões que fazem referência aos sensores disponíveis na ESP8266, através desses botões o usuário pode visualizar um gráfico de medições referente aos dados medidos pelo sensor escolhido. O usuário pode alterar o tempo em que a ESP8266 realiza as medições dos dados dos sensores. Nos campos de input, o primeiro é possível solicitar a alteração do tempo de medição dos sensores da ESP8266 e o segundo altera o tempo em que é atualizada os gráficos da interface web (Figura 10). A Interface Web se comunica apenas com a API do sistema, não conhecendo os outros elementos que compõem o  sistema como a SBC, a ESP8266, o Broker. 
 
 ![Imagem da Inteface](./images/interface_web.png)
 Figura 10: Interface HTML
@@ -366,14 +371,18 @@ Neste projeto a ESP esperava um comando de 2 dígitos, que era convertido em str
 Mensagem de Resposta:
     código_resposta+node_sensor+valor_sensor
 ```
-Exceto quando é apenas solicitado a situação da ESP, o qual ela responderá apenas com o código de resposta. A figura 12 mostra como é feita essa verificação e a mensagem de resposta que é montada quando o cliente mqtt publica os dados.
+Exceto quando é apenas solicitado a situação da ESP, o qual ela responderá apenas com o código de resposta. A figura 12 mostra como é feita essa verificação e a mensagem de resposta que é montada quando o cliente MQTT publica os dados.
 
 ![Imagem resposta node](./images/response_node_mqtt.png)
 Figura 12: Publicação da mensagem do ESP8266
 
 <h1>Conclusão e Considerações Finais</h1>
 
-O sistema desenvolvido não atende todos os requisitos requeridos no Problema 3, ficando em falta a interação do usuário com a interface local, a visualização do histórico e menu no display LDC. Foi acrescentada a possibilidade de se alterar o intervalo de tempo das medições através da interface web. 
+O sistema desenvolvido não atende todos os requisitos requeridos no Problema 3, ficando em falta a interação do usuário com a interface local, a visualização do histórico e menu na IHM Display. Foi acrescentada a possibilidade de se alterar o intervalo de tempo das medições através da IHM Web. Apesar de não cumprir todos os requisitos solicitados, a solução desenvolvida e descrita aqui apresenta recursos sólidos. 
+
+O SBC possui conexão MQTT com possibilidade de reconexão em caso de queda, envio automático dos comandos de solicitação para a ESP8266, rápida velocidade de troca de mensagens com possibilidade de alterar o tempo através da IHM Web. Escrita na IHM Display e IHM Terminal da medição dos sensores, interação com LED e do histórico, apresentação de gráfico com histórico de medições dos sensores. Também implementa o status de conexão com ESP8266 na IHM Web. 
+
+Vários pontos foram abordados através da construção dessa solução e há vários outros que poderiam melhorar o sistema desenvolvido ou feito de forma diferente. Poderia existir a interação com botões de modo a criar um menu de interação com o IHM Display utilizando a biblioteca *wirinPi.h* com os métodos de captura de valores de pinos de entrada e saída. A solução para estes botões seria feita através de interrupção e debounce para gerir os dados e manipular o programa para que fossem incorporados ao funcionamento.
 
 <h1>Referências</h1>
 
@@ -383,4 +392,22 @@ COSTA NETO, J. V. da; BARROS FILHO, E. M. de .; SANTANA, J. R. . Single-Board Co
 
 Torres. Andrei B.B., Rocha. Atslands R., Souza. José Neuman. Análise de Desempenho de Brokers MQTT em Sistema de Baixo Custo. XXXVI Congresso da Sociedade Brasileira de Computação. - 15º Workshop em Desempenho de Sistemas Computacionais e de Comunicação. 
 
+[SBC](https://www.baesystems.com/en-us/definition/what-are-single-board-computers)
 
+[Orange Pi PC Plus](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-PC-Plus.html)
+
+[IoT](https://www.oracle.com/br/internet-of-things/what-is-iot/)
+
+[ESP8266](https://www.filipeflop.com/produto/modulo-wifi-esp8266-nodemcu-esp-12/)
+
+[MQTT](https://aws.amazon.com/pt/what-is/mqtt/)
+
+[PahoMQTT](https://www.emqx.io/docs/en/v4/development/c.html)
+
+[EclipseMQTT](https://www.eclipse.org/paho/index.php?page=clients/c/index.php)
+
+[WiringPi] (http://wiringpi.com/)
+
+[String.h](https://petbcc.ufscar.br/string/)
+
+[Malloc](https://www.ime.usp.br/~pf/algoritmos/aulas/aloca.html)
