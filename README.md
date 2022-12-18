@@ -6,25 +6,45 @@
     <li><a href="https://github.com/ian-zaque">@ian-zaque</a></li>
 </div>
 
-<h1>Executar o projeto</h1>
+<details>
+<summary>Instruções de uso</summary>
 
-```
-Clone o repositório, execute: 
+1. Clone o repositório.
+    ```sh
+        git clone https://github.com/ian-zaque/pbl_SD_3.git
+    ```
 
-git clone 
+2. No SBC, compilar o arquivo mqtt.c
+    ```sh
+        make mqtt
+    ```
 
-em /api execute
-npm install
-node server.js
+3. Configure o módulo Wifi ESP8266 NodeMcu.
+    * No software Arduino IDE:
+    <ul>
+        <li> Abrir arquivo PBL_SD_3.ino </li>
+        <li> Verificar conexão e porta Wifi do ESP NodeMCU </li>
+        <li> Se conectado, carregar sketch no módulo </li>
+    </ul
 
-Para executar a interface suba um servidor local html. 
-em /interface_html execute o arquivo index.html
+4. Navegar até a pasta */api* e executar:
+    ```sh
+        npm install
+    ```
+* Após conclusão executar:
+    ```sh
+        node server.js
+    ```
 
-obs: Recomenda-se utilzar a IDE VsCode e sua extensão LIVE-SERVER
-```
+5. Para executar a IHM Web (interface), suba servidor HTTP local.
+
+6. Navegar até a pasta */interface_html* e abrir arquivo *index.html*
+    * Recomenda-se utilzar a IDE VsCode e sua extensão LIVE-SERVER
 
 
-<h1>Indice</h1>
+</details>
+
+<h1>Índice</h1>
 <ol>
     <li>Contextualização do Problema</li>
     <li>Fundamentação Teórica </li>
