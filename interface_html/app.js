@@ -151,7 +151,7 @@ function speedReq() {
   }
 }
 function enviaComando() {
-  var input = document.querySelector("#comando");
+  var input = document.querySelector("#time_change");
   var value = input.value;
   axios.post("http://localhost:3000/comando", { comando: value });
   console.log(value);
